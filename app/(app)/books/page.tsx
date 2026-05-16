@@ -1,0 +1,70 @@
+'use client'
+
+import Link from 'next/link'
+import { useBooks } from '@/lib/hooks/useBooks'
+import { useUIStore } from '@/lib/stores/uiStore'
+import { BookCard } from '@/components/books/BookCard'
+import { BookFilters } from '@/components/books/BookFilters'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { Button } from '@/components/ui/button'
+import type { BookWithNoteCount } from '@/lib/types/app.types'
+
+export default function BooksPage() {
+  const { books, loading } = useBooks()
+  const { searchQuery, filterStatus } = useUIStore()
+
+  const filtered = books.filter((book: BookWithNoteCount) => {
+    const matchStatus = !filterStatus || book.status === filterStatus
+    const q = searchQuery.toLowerCase()
+    const matchQuery =
+      !q ||
+      book.title.toLowerCase().includes(q) ||
+      book.author.toLowerCase().includes(q)
+    return matchStatus && matchQuery
+  })
+
+  return (
+    <div>
+      <PageHeader
+        title="本棚"
+        description={`${books.length}冊登録済み`}
+        action={
+          <Link href="/books/new">
+            <Button size="sm">＋ 追加</Button>
+          </Link>
+        }
+      />
+
+      <BookFilters />
+
+      {loading ? (
+        <LoadingSpinner />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+         
+          title={books.length === 0 ? '本を登録しましょう' : '該当する本がありません'}
+          description={
+            books.length === 0
+              ? '読んでいる本や読みたい本を追加して、読書を記録しましょう'
+              : '検索条件を変えてみてください'
+          }
+          action={
+            books.length === 0 ? (
+              <Link href="/books/new">
+                <Button>最初の1冊を追加</Button>
+              </Link>
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pb-6">
+          {filtered.map((book: BookWithNoteCount) => (
+            <BookCard key={book.id} book={book} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
