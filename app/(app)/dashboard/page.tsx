@@ -37,7 +37,7 @@ export default function DashboardPage() {
         </div>
         <button
           type="button"
-          onClick={signOut}
+          onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
           className="md:hidden flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:bg-secondary transition-colors"
         >
           <LogOut size={18} />

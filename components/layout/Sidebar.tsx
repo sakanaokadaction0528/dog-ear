@@ -65,7 +65,7 @@ export function Sidebar() {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-muted-foreground text-xs"
-            onClick={signOut}
+            onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
           >
             ログアウト
           </Button>
