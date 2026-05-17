@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Search, X } from 'lucide-react'
 import { usePosts } from '@/lib/hooks/usePosts'
 import { useFollowingIds } from '@/lib/hooks/useFollow'
 import { PostCard } from '@/components/posts/PostCard'
@@ -20,6 +20,7 @@ export default function FeedPage() {
   const followingIds = useFollowingIds()
   const [tab, setTab] = useState<FeedTab>('all')
   const [refreshing, setRefreshing] = useState(false)
+  const [query, setQuery] = useState('')
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -45,9 +46,13 @@ export default function FeedPage() {
     }
   }
 
-  const visiblePosts = tab === 'following'
-    ? posts.filter(p => followingIds.includes(p.user_id))
-    : posts
+  const q = query.trim().toLowerCase()
+  const visiblePosts = posts
+    .filter(p => tab === 'following' ? followingIds.includes(p.user_id) : true)
+    .filter(p => q
+      ? p.book_title.toLowerCase().includes(q) || p.book_author?.toLowerCase().includes(q)
+      : true
+    )
 
   return (
     <div>
@@ -84,15 +89,37 @@ export default function FeedPage() {
         </div>
       )}
 
-      <div className="px-4 pt-4 pb-24 space-y-4">
+      {/* Search bar */}
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="本のタイトル・著者で検索"
+            className="w-full pl-9 pr-8 py-2 text-sm bg-secondary border border-border rounded-lg outline-none focus:border-primary transition-colors"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 pt-3 pb-24 space-y-4">
         {loading ? (
           <div className="space-y-4">
             {[0, 1, 2].map(i => <PostCardSkeleton key={i} />)}
           </div>
         ) : visiblePosts.length === 0 ? (
           <EmptyState
-            title={tab === 'following' ? 'フォロー中の投稿がありません' : 'まだ投稿がありません'}
-            description={tab === 'following' ? 'ユーザーをフォローすると投稿が表示されます' : '本の詳細画面から「おすすめを投稿する」で投稿できます'}
+            title={q ? '該当する投稿がありません' : tab === 'following' ? 'フォロー中の投稿がありません' : 'まだ投稿がありません'}
+            description={q ? '別のキーワードで検索してみてください' : tab === 'following' ? 'ユーザーをフォローすると投稿が表示されます' : '本の詳細画面から「おすすめを投稿する」で投稿できます'}
           />
         ) : (
           visiblePosts.map((post) => (
