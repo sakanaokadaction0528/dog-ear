@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookOpen, CheckSquare, Library } from 'lucide-react'
+import { BookOpen, CheckSquare, Library, LogOut } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { BookCard } from '@/components/books/BookCard'
 import { ActionItemCard } from '@/components/actions/ActionItemCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -16,6 +17,7 @@ import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
 export default function DashboardPage() {
   const { books, loading: booksLoading } = useBooks()
   const { items, loading: actionsLoading, toggleComplete } = useActionItems()
+  const { signOut } = useAuth()
 
   const reading = books.filter((b: BookWithNoteCount) => b.status === 'reading')
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
@@ -29,10 +31,17 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center gap-2.5">
         <Image src="/icon-192.png" alt="Dog Ear" width={36} height={36} className="rounded-lg" />
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">Dog Ear</h1>
           <p className="text-sm text-muted-foreground mt-0.5">読書を、行動に変えよう</p>
         </div>
+        <button
+          type="button"
+          onClick={signOut}
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:bg-secondary transition-colors"
+        >
+          <LogOut size={18} />
+        </button>
       </div>
 
       {/* Stats */}

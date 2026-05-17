@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Share2 } from 'lucide-react'
+import { Share2, Sparkles, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useBook, useBooks } from '@/lib/hooks/useBooks'
 import { useNotes } from '@/lib/hooks/useNotes'
@@ -30,6 +30,7 @@ export default function BookDetailPage() {
   const { createPost } = usePosts()
   const router = useRouter()
   const [showPostForm, setShowPostForm] = useState(false)
+  const [activeTab, setActiveTab] = useState('notes')
 
   async function handleDeleteNote(noteId: string) {
     if (!confirm('このメモを削除しますか？')) return
@@ -87,7 +88,7 @@ export default function BookDetailPage() {
         }
       />
 
-      <Tabs defaultValue="notes" className="flex-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
         <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto px-4 justify-start gap-0">
           {[
             { value: 'notes', label: `メモ (${notes.length})` },
@@ -109,17 +110,25 @@ export default function BookDetailPage() {
 
         {/* Notes Tab */}
         <TabsContent value="notes" className="mt-0 px-4 pt-4 space-y-3">
-          <div className="flex justify-end">
-            <Link href={`/books/${bookId}/notes/new`}>
-              <Button size="sm">＋ メモを追加</Button>
-            </Link>
-          </div>
+          {/* AI nudge banner */}
+          {!notesLoading && notes.length >= 3 && !latestContent && !generating && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('ai')}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/8 border border-primary/20 text-left hover:bg-primary/12 transition-colors"
+            >
+              <Sparkles size={16} className="text-primary shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-primary">AI要約を生成しよう</p>
+                <p className="text-xs text-muted-foreground">メモが{notes.length}件たまりました。AIがまとめてくれます。</p>
+              </div>
+            </button>
+          )}
 
           {notesLoading ? (
             <LoadingSpinner />
           ) : notes.length === 0 ? (
             <EmptyState
-             
               title="まだメモがありません"
               description="読んだ内容や気づきを記録しましょう"
               action={
@@ -129,7 +138,7 @@ export default function BookDetailPage() {
               }
             />
           ) : (
-            <div className="space-y-3 pb-4">
+            <div className="space-y-3 pb-24">
               {notes.map((note) => (
                 <NoteCard
                   key={note.id}
@@ -219,16 +228,39 @@ export default function BookDetailPage() {
             )}
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive w-full"
-            onClick={handleDeleteBook}
-          >
-            この本を削除する
-          </Button>
+          {/* Danger zone */}
+          <div className="border border-destructive/30 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-medium text-destructive">危険な操作</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">この本を削除する</p>
+                <p className="text-xs text-muted-foreground">メモ・要約もすべて削除されます</p>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={handleDeleteBook}
+              >
+                <Trash2 size={13} />
+                削除
+              </Button>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
+
+      {/* FAB — メモ追加（ノートタブ表示中のみ） */}
+      {activeTab === 'notes' && (
+        <Link href={`/books/${bookId}/notes/new`}>
+          <button
+            type="button"
+            className="fixed bottom-20 right-4 md:bottom-6 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={24} />
+          </button>
+        </Link>
+      )}
     </div>
   )
 }
