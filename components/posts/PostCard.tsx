@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Heart, BookOpen, Trash2, User } from 'lucide-react'
 import { formatDateShort } from '@/lib/utils/date'
 import { Button } from '@/components/ui/button'
@@ -56,7 +57,10 @@ export function PostCard({ post, onToggleWant, onDelete, isOwner }: PostCardProp
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 pb-4 pt-1">
-        <div className="flex items-center gap-1.5 min-w-0">
+        <Link
+          href={`/profile/${post.user_id}`}
+          className="flex items-center gap-1.5 min-w-0 hover:opacity-70 transition-opacity"
+        >
           {post.poster_avatar_url ? (
             <img src={post.poster_avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
           ) : (
@@ -68,7 +72,7 @@ export function PostCard({ post, onToggleWant, onDelete, isOwner }: PostCardProp
             {post.poster_nickname ?? '匿名'}
           </span>
           <span className="text-xs text-muted-foreground shrink-0">· {formatDateShort(post.created_at)}</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           {isOwner && onDelete && (
             <Button

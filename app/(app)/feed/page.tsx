@@ -3,16 +3,22 @@
 import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { usePosts } from '@/lib/hooks/usePosts'
+import { useFollowingIds } from '@/lib/hooks/useFollow'
 import { PostCard } from '@/components/posts/PostCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PostCardSkeleton } from '@/components/shared/Skeleton'
 import { TopBar } from '@/components/layout/TopBar'
 import { toast } from 'sonner'
 import { useAuthContext } from '@/lib/context/AuthContext'
+import { cn } from '@/lib/utils/cn'
+
+type FeedTab = 'all' | 'following'
 
 export default function FeedPage() {
   const { user } = useAuthContext()
   const { posts, loading, toggleWant, deletePost, refetch } = usePosts()
+  const followingIds = useFollowingIds()
+  const [tab, setTab] = useState<FeedTab>('all')
   const [refreshing, setRefreshing] = useState(false)
 
   async function handleRefresh() {
@@ -39,6 +45,10 @@ export default function FeedPage() {
     }
   }
 
+  const visiblePosts = tab === 'following'
+    ? posts.filter(p => followingIds.includes(p.user_id))
+    : posts
+
   return (
     <div>
       <TopBar
@@ -53,18 +63,39 @@ export default function FeedPage() {
           </button>
         }
       />
+
+      {/* Tabs */}
+      {user && (
+        <div className="flex border-b border-border px-4">
+          {(['all', 'following'] as FeedTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'py-2.5 px-4 text-sm font-medium transition-colors border-b-2 -mb-px',
+                tab === t
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t === 'all' ? '全員' : 'フォロー中'}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="px-4 pt-4 pb-24 space-y-4">
         {loading ? (
           <div className="space-y-4">
-            {[0,1,2].map(i => <PostCardSkeleton key={i} />)}
+            {[0, 1, 2].map(i => <PostCardSkeleton key={i} />)}
           </div>
-        ) : posts.length === 0 ? (
+        ) : visiblePosts.length === 0 ? (
           <EmptyState
-            title="まだ投稿がありません"
-            description="本の詳細画面から「おすすめを投稿する」で投稿できます"
+            title={tab === 'following' ? 'フォロー中の投稿がありません' : 'まだ投稿がありません'}
+            description={tab === 'following' ? 'ユーザーをフォローすると投稿が表示されます' : '本の詳細画面から「おすすめを投稿する」で投稿できます'}
           />
         ) : (
-          posts.map((post) => (
+          visiblePosts.map((post) => (
             <PostCard
               key={post.id}
               post={post}

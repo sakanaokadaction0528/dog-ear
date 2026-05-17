@@ -6,6 +6,7 @@ import { useAuthContext } from '@/lib/context/AuthContext'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
 import { useProfile } from '@/lib/hooks/useProfile'
+import { useFollow } from '@/lib/hooks/useFollow'
 import { BookCard } from '@/components/books/BookCard'
 import { StatsSkeleton } from '@/components/shared/Skeleton'
 import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
@@ -15,6 +16,7 @@ export default function MyPage() {
   const { books } = useBooks()
   const { items } = useActionItems()
   const { profile } = useProfile()
+  const { followerCount, followingCount } = useFollow(user?.id ?? '')
 
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
   const totalNotes = books.reduce((sum: number, b: BookWithNoteCount) => sum + b.note_count, 0)
@@ -57,6 +59,18 @@ export default function MyPage() {
             <p className="text-xs text-muted-foreground mt-1 max-w-[240px] leading-relaxed">{profile.bio}</p>
           )}
         </div>
+        {!isGuest && (
+          <div className="flex items-center gap-6">
+            <div className="text-center">
+              <p className="text-sm font-bold text-foreground">{followerCount}</p>
+              <p className="text-xs text-muted-foreground">フォロワー</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-bold text-foreground">{followingCount}</p>
+              <p className="text-xs text-muted-foreground">フォロー中</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
