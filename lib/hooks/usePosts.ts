@@ -18,6 +18,7 @@ export function usePosts() {
   const [loading, setLoading] = useState(postsCache === null)
 
   const fetchPosts = useCallback(async () => {
+    // ゲストのプレビューモード（ローカルデータ表示）
     if (IS_PREVIEW) {
       const all = previewPosts.getAll()
       const hydrated = all.map((p) => ({
@@ -34,15 +35,23 @@ export function usePosts() {
     if (!supabase) { setLoading(false); return }
     const fallback = setTimeout(() => setLoading(false), 4000)
     try {
-      const { data } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (data) {
-        const hydrated = data.map((p: Post) => ({ ...p, is_wanted: false }))
-        postsCache = hydrated
-        setPosts(hydrated)
-      }
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+
+      const [{ data: postsData }, { data: wantsData }] = await Promise.all([
+        supabase.from('posts').select('*').order('created_at', { ascending: false }),
+        userId
+          ? supabase.from('wants').select('post_id').eq('user_id', userId)
+          : Promise.resolve({ data: [] }),
+      ])
+
+      const wantedIds = new Set((wantsData ?? []).map((w: { post_id: string }) => w.post_id))
+      const hydrated = (postsData ?? []).map((p: Post) => ({
+        ...p,
+        is_wanted: wantedIds.has(p.id),
+      }))
+      postsCache = hydrated
+      setPosts(hydrated)
     } catch { /* ignore */ } finally {
       clearTimeout(fallback)
       setLoading(false)

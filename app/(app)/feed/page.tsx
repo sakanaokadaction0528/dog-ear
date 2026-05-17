@@ -8,8 +8,10 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { PostCardSkeleton } from '@/components/shared/Skeleton'
 import { TopBar } from '@/components/layout/TopBar'
 import { toast } from 'sonner'
+import { useAuthContext } from '@/lib/context/AuthContext'
 
 export default function FeedPage() {
+  const { user } = useAuthContext()
   const { posts, loading, toggleWant, deletePost, refetch } = usePosts()
   const [refreshing, setRefreshing] = useState(false)
 
@@ -68,7 +70,7 @@ export default function FeedPage() {
               post={post}
               onToggleWant={handleToggleWant}
               onDelete={handleDelete}
-              isOwner={post.user_id === 'preview'}
+              isOwner={post.user_id === 'preview' || post.user_id === user?.id}
             />
           ))
         )}
