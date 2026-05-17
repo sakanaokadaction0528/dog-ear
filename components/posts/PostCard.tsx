@@ -83,9 +83,7 @@ export function PostCard({ post, onToggleWant, onDelete, isOwner }: PostCardProp
               strokeWidth={post.is_wanted ? 0 : 1.8}
             />
             読みたい！
-            {post.want_count > 0 && (
-              <span>{post.want_count}</span>
-            )}
+            <span>{post.want_count}</span>
           </button>
         </div>
       </div>
