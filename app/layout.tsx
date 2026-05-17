@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
+import { M_PLUS_Rounded_1c } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const geistSans = Geist({
+const mPlusRounded = M_PLUS_Rounded_1c({
   variable: '--font-geist-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '700'],
   display: 'swap',
 })
 
@@ -35,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${geistSans.variable} h-full antialiased`}
+      className={`${mPlusRounded.variable} h-full antialiased`}
     >
       <head>
         <link rel="preconnect" href="https://xvzpxuiqxvhwfmjiooow.supabase.co" />
