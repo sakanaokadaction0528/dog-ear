@@ -2,17 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Plus, CheckSquare, Rss } from 'lucide-react'
+import { Home, BookOpen, CheckSquare, Rss, Send } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
-  { href: '/dashboard', icon: Home,        label: 'ダッシュボード' },
-  { href: '/books',     icon: BookOpen,    label: '本棚' },
-  { href: '/books/new', icon: Plus,        label: '本を追加' },
-  { href: '/actions',   icon: CheckSquare, label: '行動リスト' },
-  { href: '/feed',      icon: Rss,         label: 'フィード' },
+  { href: '/dashboard',  icon: Home,        label: 'ダッシュボード' },
+  { href: '/books',      icon: BookOpen,    label: '本棚' },
+  { href: '/actions',    icon: CheckSquare, label: '行動リスト' },
+  { href: '/posts/new',  icon: Send,        label: '投稿' },
+  { href: '/feed',       icon: Rss,         label: 'フィード' },
 ]
 
 export function Sidebar() {
@@ -35,7 +35,7 @@ export function Sidebar() {
         {navItems.map(({ href, icon: Icon, label }) => {
           const active =
             pathname === href ||
-            (href !== '/books/new' && pathname.startsWith(href + '/'))
+            (href !== '/posts/new' && pathname.startsWith(href + '/'))
 
           return (
             <Link
