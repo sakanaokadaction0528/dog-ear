@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, CheckSquare, FileText, Library, LogOut, Pencil, User, UserPlus } from 'lucide-react'
+import { BookOpen, CheckSquare, FileText, Heart, Library, LogOut, Pencil, User, UserPlus } from 'lucide-react'
 import { useAuthContext } from '@/lib/context/AuthContext'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
@@ -129,14 +129,23 @@ export default function MyPage() {
             </Link>
           </>
         ) : (
-          <button
-            type="button"
-            onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
-            className="w-full flex items-center gap-3 px-4 py-4 text-left text-destructive hover:bg-destructive/5 transition-colors"
-          >
-            <LogOut size={16} />
-            <span className="text-sm font-medium">ログアウト</span>
-          </button>
+          <>
+            <Link
+              href="/mypage/donate"
+              className="w-full flex items-center gap-3 px-4 py-4 text-left text-rose-500 hover:bg-rose-50 transition-colors"
+            >
+              <Heart size={16} />
+              <span className="text-sm font-medium">寄付</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
+              className="w-full flex items-center gap-3 px-4 py-4 text-left text-destructive hover:bg-destructive/5 transition-colors"
+            >
+              <LogOut size={16} />
+              <span className="text-sm font-medium">ログアウト</span>
+            </button>
+          </>
         )}
       </div>
     </div>
