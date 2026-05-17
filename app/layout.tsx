@@ -42,29 +42,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://xvzpxuiqxvhwfmjiooow.supabase.co" />
       </head>
       <body className="min-h-full flex flex-col">
-        <div
-          id="splash"
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            background: '#ffffff', gap: '16px',
-            animation: 'splashFade 0.4s ease-out 1.1s forwards',
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-192.png" alt="Dog Ear" width={80} height={80} style={{ borderRadius: '20px' }} />
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.5px' }}>Dog Ear</div>
-            <div style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>読書を、行動に変える</div>
-          </div>
-        </div>
-        <script dangerouslySetInnerHTML={{ __html: `
-          setTimeout(function(){
-            var s = document.getElementById('splash');
-            if(s) s.remove();
-          }, 1600);
-        `}} />
         {children}
         <Toaster richColors position="top-center" />
       </body>

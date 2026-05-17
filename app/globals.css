@@ -2,9 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@keyframes splashFade {
-  to { opacity: 0; pointer-events: none; }
-}
 
 @custom-variant dark (&:is(.dark *));
 
