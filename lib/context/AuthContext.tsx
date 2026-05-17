@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { migrateGuestData } from '@/lib/utils/migrateGuestData'
 
 type AuthContextType = {
   user: User | null
@@ -32,6 +33,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (_event === 'SIGNED_IN' && session?.user) {
+        migrateGuestData(session.user.id, supabase).catch(() => {})
+      }
     })
 
     return () => subscription.unsubscribe()

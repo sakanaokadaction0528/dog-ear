@@ -46,7 +46,6 @@ export async function migrateGuestData(userId: string, supabase: SupabaseClient)
         personal_relevance: note.personal_relevance ?? null,
         action_idea: note.action_idea ?? null,
         importance: note.importance,
-        user_id: userId,
       })
     }
   }
