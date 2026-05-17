@@ -33,8 +33,7 @@ export function BottomNav() {
               active ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            <Icon size={20} strokeWidth={1.8} />
-            <span className="text-[10px] font-medium leading-none">{label}</span>
+            <Icon size={22} strokeWidth={1.8} />
           </Link>
         )
       })}
