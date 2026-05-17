@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, BookOpen, Trash2 } from 'lucide-react'
+import { Heart, BookOpen, Trash2, User } from 'lucide-react'
 import { formatDateShort } from '@/lib/utils/date'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
@@ -56,7 +56,19 @@ export function PostCard({ post, onToggleWant, onDelete, isOwner }: PostCardProp
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 pb-4 pt-1">
-        <span className="text-xs text-muted-foreground">{formatDateShort(post.created_at)}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {post.poster_avatar_url ? (
+            <img src={post.poster_avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <User size={11} className="text-muted-foreground" />
+            </div>
+          )}
+          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+            {post.poster_nickname ?? '匿名'}
+          </span>
+          <span className="text-xs text-muted-foreground shrink-0">· {formatDateShort(post.created_at)}</span>
+        </div>
         <div className="flex items-center gap-2">
           {isOwner && onDelete && (
             <Button

@@ -45,10 +45,21 @@ export function usePosts() {
           : Promise.resolve({ data: [] }),
       ])
 
+      // 投稿者のプロフィール（ニックネーム・アバター）を取得
+      const authorIds = [...new Set((postsData ?? []).map((p: Post) => p.user_id))]
+      const { data: profilesData } = authorIds.length > 0
+        ? await supabase.from('profiles').select('id, nickname, avatar_url').in('id', authorIds)
+        : { data: [] }
+      const profileMap = new Map(
+        (profilesData ?? []).map((p: { id: string; nickname: string | null; avatar_url: string | null }) => [p.id, p])
+      )
+
       const wantedIds = new Set((wantsData ?? []).map((w: { post_id: string }) => w.post_id))
       const hydrated = (postsData ?? []).map((p: Post) => ({
         ...p,
         is_wanted: wantedIds.has(p.id),
+        poster_nickname: profileMap.get(p.user_id)?.nickname ?? null,
+        poster_avatar_url: profileMap.get(p.user_id)?.avatar_url ?? null,
       }))
       postsCache = hydrated
       setPosts(hydrated)

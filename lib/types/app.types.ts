@@ -45,6 +45,8 @@ export type Post = {
   image_url: string | null
   want_count: number
   created_at: string
+  poster_nickname?: string | null
+  poster_avatar_url?: string | null
 }
 
 export type Want = {
