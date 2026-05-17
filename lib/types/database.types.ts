@@ -197,6 +197,7 @@ export type Database = {
           nickname: string | null
           avatar_url: string | null
           bio: string | null
+          bookshelf_public: boolean
           updated_at: string | null
         }
         Insert: {
@@ -204,6 +205,7 @@ export type Database = {
           nickname?: string | null
           avatar_url?: string | null
           bio?: string | null
+          bookshelf_public?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -211,6 +213,7 @@ export type Database = {
           nickname?: string | null
           avatar_url?: string | null
           bio?: string | null
+          bookshelf_public?: boolean
           updated_at?: string | null
         }
         Relationships: []

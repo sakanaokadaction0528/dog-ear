@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { User } from 'lucide-react'
+import { User, ChevronDown, ChevronUp, Library } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { TopBar } from '@/components/layout/TopBar'
 import { PostCard } from '@/components/posts/PostCard'
@@ -11,6 +11,7 @@ import { useAuthContext } from '@/lib/context/AuthContext'
 import { usePosts } from '@/lib/hooks/usePosts'
 import { useFollow } from '@/lib/hooks/useFollow'
 import { cn } from '@/lib/utils/cn'
+import { BOOK_STATUS_LABELS } from '@/lib/types/app.types'
 import type { Post } from '@/lib/types/app.types'
 
 type Profile = {
@@ -18,6 +19,14 @@ type Profile = {
   nickname: string | null
   avatar_url: string | null
   bio: string | null
+  bookshelf_public: boolean
+}
+
+type BookRow = {
+  id: string
+  title: string
+  author: string
+  status: 'unread' | 'reading' | 'finished' | 'review'
 }
 
 export default function ProfilePage() {
@@ -27,6 +36,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
   const { isFollowing, followerCount, followingCount, loading: followLoading, toggle } = useFollow(userId)
+  const [books, setBooks] = useState<BookRow[]>([])
+  const [booksOpen, setBooksOpen] = useState(false)
 
   const isOwnProfile = user?.id === userId
 
@@ -36,11 +47,20 @@ export default function ProfilePage() {
       if (!supabase) { setProfileLoading(false); return }
       const { data } = await supabase
         .from('profiles')
-        .select('id, nickname, avatar_url, bio')
+        .select('id, nickname, avatar_url, bio, bookshelf_public')
         .eq('id', userId)
         .single()
       setProfile(data)
       setProfileLoading(false)
+
+      if (data?.bookshelf_public) {
+        const { data: booksData } = await supabase
+          .from('books')
+          .select('id, title, author, status')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+        setBooks((booksData ?? []) as BookRow[])
+      }
     }
     fetchProfile()
   }, [userId])
@@ -104,6 +124,38 @@ export default function ProfilePage() {
             </>
           )}
         </div>
+
+        {/* Bookshelf (collapsible) */}
+        {profile?.bookshelf_public && books.length > 0 && (
+          <section>
+            <button
+              onClick={() => setBooksOpen(v => !v)}
+              className="w-full flex items-center justify-between py-2 mb-2"
+            >
+              <div className="flex items-center gap-2">
+                <Library size={14} className="text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">本棚</span>
+                <span className="text-xs text-muted-foreground">({books.length}冊)</span>
+              </div>
+              {booksOpen ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+            </button>
+            {booksOpen && (
+              <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
+                {books.map(book => (
+                  <div key={book.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{book.title}</p>
+                      {book.author && <p className="text-xs text-muted-foreground truncate">{book.author}</p>}
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0 bg-secondary px-2 py-0.5 rounded-full">
+                      {BOOK_STATUS_LABELS[book.status]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Posts */}
         <section>

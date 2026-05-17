@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Loader2, User } from 'lucide-react'
+import { Camera, Loader2, User, Library } from 'lucide-react'
 import { toast } from 'sonner'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
@@ -38,6 +38,7 @@ export default function EditProfilePage() {
 
   const [nickname, setNickname] = useState('')
   const [bio, setBio] = useState('')
+  const [bookshelfPublic, setBookshelfPublic] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -48,6 +49,7 @@ export default function EditProfilePage() {
     if (profile) {
       setNickname(profile.nickname ?? '')
       setBio(profile.bio ?? '')
+      setBookshelfPublic(profile.bookshelf_public ?? false)
       setAvatarUrl(profile.avatar_url ?? null)
     }
   }, [profile])
@@ -82,6 +84,7 @@ export default function EditProfilePage() {
         nickname: nickname.trim() || undefined,
         bio: bio.trim() || undefined,
         avatar_url: avatarUrl,
+        bookshelf_public: bookshelfPublic,
       })
       toast.success('プロフィールを保存しました')
       router.push('/mypage')
@@ -161,6 +164,24 @@ export default function EditProfilePage() {
             onChange={(e) => setBio(e.target.value)}
           />
           <p className="text-xs text-muted-foreground text-right">{bio.length}/150</p>
+        </div>
+
+        {/* 本棚公開設定 */}
+        <div className="flex items-center justify-between py-3 px-4 bg-card border border-border rounded-xl">
+          <div className="flex items-center gap-3">
+            <Library size={16} className="text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">本棚を公開する</p>
+              <p className="text-xs text-muted-foreground">他のユーザーが本棚を閲覧できます</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBookshelfPublic(v => !v)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${bookshelfPublic ? 'bg-primary' : 'bg-muted'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${bookshelfPublic ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
         </div>
 
         <Button

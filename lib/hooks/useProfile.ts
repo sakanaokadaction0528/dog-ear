@@ -9,6 +9,7 @@ export interface Profile {
   nickname: string | null
   avatar_url: string | null
   bio: string | null
+  bookshelf_public: boolean
 }
 
 export function useProfile() {
@@ -22,7 +23,7 @@ export function useProfile() {
     if (!supabase) { setLoading(false); return }
     const { data } = await supabase
       .from('profiles')
-      .select('id, nickname, avatar_url, bio')
+      .select('id, nickname, avatar_url, bio, bookshelf_public')
       .eq('id', user.id)
       .maybeSingle()
     setProfile(data as Profile | null)
@@ -35,6 +36,7 @@ export function useProfile() {
     nickname?: string
     bio?: string
     avatar_url?: string | null
+    bookshelf_public?: boolean
   }) => {
     const supabase = getSupabaseBrowserClient()
     if (!supabase || !user) throw new Error('Not authenticated')
@@ -47,6 +49,7 @@ export function useProfile() {
       nickname: null,
       avatar_url: null,
       bio: null,
+      bookshelf_public: false,
       ...prev,
       ...updates,
     }))
