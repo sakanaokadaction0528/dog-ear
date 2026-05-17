@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, BookOpen, CheckSquare, Rss, Send } from 'lucide-react'
+import Image from 'next/image'
+
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -23,7 +25,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-60 min-h-screen bg-card border-r border-border px-3 py-6">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-3 mb-8">
-        <BookOpen size={22} strokeWidth={1.8} className="text-primary" />
+        <Image src="/icon-192.png" alt="Dog Ear" width={28} height={28} className="rounded-md" />
         <div>
           <h1 className="font-bold text-foreground text-lg leading-none">Dog Ear</h1>
           <p className="text-xs text-muted-foreground">読書を、行動に変える</p>
