@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useUIStore } from '@/lib/stores/uiStore'
 import { BookCard } from '@/components/books/BookCard'
@@ -30,11 +31,6 @@ export default function BooksPage() {
       <PageHeader
         title="本棚"
         description={`${books.length}冊登録済み`}
-        action={
-          <Link href="/books/new">
-            <Button size="sm">＋ 追加</Button>
-          </Link>
-        }
       />
 
       <BookFilters />
@@ -61,12 +57,22 @@ export default function BooksPage() {
           }
         />
       ) : (
-        <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pb-6">
+        <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
           {filtered.map((book: BookWithNoteCount) => (
             <BookCard key={book.id} book={book} />
           ))}
         </div>
       )}
+
+      {/* FAB */}
+      <Link href="/books/new">
+        <button
+          type="button"
+          className="fixed bottom-20 right-4 md:bottom-6 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={24} />
+        </button>
+      </Link>
     </div>
   )
 }
