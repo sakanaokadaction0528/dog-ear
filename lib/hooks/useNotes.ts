@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
-import { previewNotes } from '@/lib/preview/store'
+import { previewNotes, previewActions } from '@/lib/preview/store'
 import type { ReadingNote, ReadingNoteInsert } from '@/lib/types/app.types'
 
 const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
@@ -55,6 +55,9 @@ export function useNotes(bookId: string) {
   useEffect(() => { fetchNotes() }, [fetchNotes])
 
   async function createNote(values: Omit<ReadingNoteInsert, 'book_id'>) {
+    const importance = values.importance ?? 3
+    const priority = importance >= 4 ? 'high' : importance <= 2 ? 'low' : 'medium'
+
     if (IS_PREVIEW) {
       const note = previewNotes.create(bookId, {
         read_date: values.read_date ?? new Date().toISOString().slice(0, 10),
@@ -64,14 +67,39 @@ export function useNotes(bookId: string) {
         insight: values.insight ?? null,
         personal_relevance: values.personal_relevance ?? null,
         action_idea: values.action_idea ?? null,
-        importance: values.importance ?? 3,
+        importance,
       })
+      if (values.action_idea) {
+        previewActions.create({
+          title: values.action_idea.slice(0, 60),
+          description: values.action_idea.length > 60 ? values.action_idea.slice(60) : null,
+          category: 'this_week',
+          priority,
+          due_date: null,
+          completed: false,
+          book_id: bookId,
+        })
+      }
       setNotes(previewNotes.getByBook(bookId))
       return note
     }
     const { data, error } = await supabase!
       .from('reading_notes').insert({ ...values, book_id: bookId }).select().single()
     if (error) throw new Error(error.message)
+    if (values.action_idea) {
+      const { data: { user } } = await supabase!.auth.getUser()
+      if (user) {
+        await supabase!.from('action_items').insert({
+          title: values.action_idea.slice(0, 60),
+          description: values.action_idea.length > 60 ? values.action_idea.slice(60) : null,
+          category: 'this_week',
+          priority,
+          due_date: null,
+          book_id: bookId,
+          user_id: user.id,
+        })
+      }
+    }
     notesCache.delete(bookId)
     await fetchNotes(true)
     return data

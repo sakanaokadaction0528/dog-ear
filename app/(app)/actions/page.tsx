@@ -77,7 +77,7 @@ export default function ActionsPage() {
         <EmptyState
          
           title="タスクがありません"
-          description="AI要約を生成するとタスクが自動で追加されます。または手動で追加することもできます。"
+          description="メモに行動アイデアを書くと自動でタスクが追加されます。手動で追加することもできます。"
           action={<Button onClick={() => setShowForm(true)}>タスクを追加</Button>}
         />
       ) : (

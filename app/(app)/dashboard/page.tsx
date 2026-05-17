@@ -99,7 +99,7 @@ export default function DashboardPage() {
             <CardContent className="py-4 text-center">
               <p className="text-sm text-muted-foreground">今日のタスクはありません</p>
               <p className="text-xs text-muted-foreground mt-1">
-                AI要約を生成するとタスクが自動追加されます
+                メモに行動アイデアを書くと自動追加されます
               </p>
             </CardContent>
           </Card>
