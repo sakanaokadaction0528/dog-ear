@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, CheckSquare, FileText, Library, LogOut, User, UserPlus } from 'lucide-react'
+import { BookOpen, CheckSquare, FileText, Library, LogOut, Pencil, User, UserPlus } from 'lucide-react'
 import { useAuthContext } from '@/lib/context/AuthContext'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
+import { useProfile } from '@/lib/hooks/useProfile'
 import { BookCard } from '@/components/books/BookCard'
 import { StatsSkeleton } from '@/components/shared/Skeleton'
 import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
@@ -13,6 +14,7 @@ export default function MyPage() {
   const { user, isGuest, authLoading, signOut } = useAuthContext()
   const { books } = useBooks()
   const { items } = useActionItems()
+  const { profile } = useProfile()
 
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
   const totalNotes = books.reduce((sum: number, b: BookWithNoteCount) => sum + b.note_count, 0)
@@ -28,15 +30,32 @@ export default function MyPage() {
     </div>
   )
 
+  const displayName = profile?.nickname ?? user?.email ?? 'ゲスト'
+
   return (
     <div className="px-4 pt-6 pb-8 space-y-6">
       {/* Profile */}
-      <div className="flex flex-col items-center gap-3 py-4">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <User size={32} className="text-primary" />
+      <div className="flex flex-col items-center gap-3 py-4 relative">
+        {!isGuest && (
+          <Link
+            href="/mypage/edit"
+            className="absolute top-0 right-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <Pencil size={16} />
+          </Link>
+        )}
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="アバター" className="w-full h-full object-cover" />
+          ) : (
+            <User size={32} className="text-primary" />
+          )}
         </div>
         <div className="text-center">
-          <p className="font-semibold text-foreground">{user?.email ?? 'ゲスト'}</p>
+          <p className="font-semibold text-foreground">{displayName}</p>
+          {profile?.bio && (
+            <p className="text-xs text-muted-foreground mt-1 max-w-[240px] leading-relaxed">{profile.bio}</p>
+          )}
         </div>
       </div>
 
