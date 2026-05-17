@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { previewBooks } from '@/lib/preview/store'
+import { useAuthContext } from '@/lib/context/AuthContext'
 import type { BookWithNoteCount, BookInsert, BookUpdate } from '@/lib/types/app.types'
 
-const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 
 // Module-level cache for real Supabase mode
 let booksCache: BookWithNoteCount[] | null = null
@@ -22,6 +23,8 @@ function parseBooks(data: unknown[]): BookWithNoteCount[] {
 }
 
 export function useBooks() {
+  const { isGuest } = useAuthContext()
+  const IS_PREVIEW = PREVIEW_ENABLED && isGuest
   const [books, setBooks] = useState<BookWithNoteCount[]>(() =>
     IS_PREVIEW ? previewBooks.getAll() : (booksCache ?? [])
   )
@@ -125,6 +128,8 @@ export function useBooks() {
 const bookByIdCache = new Map<string, BookWithNoteCount>()
 
 export function useBook(id: string) {
+  const { isGuest } = useAuthContext()
+  const IS_PREVIEW = PREVIEW_ENABLED && isGuest
   const [book, setBook] = useState<BookWithNoteCount | null>(() =>
     IS_PREVIEW ? previewBooks.getById(id) : (bookByIdCache.get(id) ?? null)
   )

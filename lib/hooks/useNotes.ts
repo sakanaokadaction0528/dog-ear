@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { previewNotes, previewActions } from '@/lib/preview/store'
+import { useAuthContext } from '@/lib/context/AuthContext'
 import type { ReadingNote, ReadingNoteInsert } from '@/lib/types/app.types'
 
-const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 
 const notesCache = new Map<string, ReadingNote[]>()
 const notesCacheTime = new Map<string, number>()
@@ -13,6 +14,8 @@ const CACHE_TTL = 60_000
 const FETCH_TIMEOUT = 4000
 
 export function useNotes(bookId: string) {
+  const { isGuest } = useAuthContext()
+  const IS_PREVIEW = PREVIEW_ENABLED && isGuest
   const [notes, setNotes] = useState<ReadingNote[]>(() =>
     IS_PREVIEW ? previewNotes.getByBook(bookId) : (notesCache.get(bookId) ?? [])
   )

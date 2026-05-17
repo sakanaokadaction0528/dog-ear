@@ -3,14 +3,17 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { previewSummaries, previewNotes, previewBooks, previewActions } from '@/lib/preview/store'
+import { useAuthContext } from '@/lib/context/AuthContext'
 import type { AISummaryRow, AISummaryContent } from '@/lib/types/app.types'
 
-const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 
 const summariesCache = new Map<string, AISummaryRow[]>()
 const FETCH_TIMEOUT = 4000
 
 export function useAISummary(bookId: string) {
+  const { isGuest } = useAuthContext()
+  const IS_PREVIEW = PREVIEW_ENABLED && isGuest
   const [summaries, setSummaries] = useState<AISummaryRow[]>(summariesCache.get(bookId) ?? [])
   const [loading, setLoading] = useState(!summariesCache.has(bookId))
   const [generating, setGenerating] = useState(false)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { migrateGuestData } from '@/lib/utils/migrateGuestData'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,10 +34,11 @@ export default function RegisterPage() {
       setError(err.message)
       setLoading(false)
     } else {
-      // If email confirmation is disabled in Supabase, redirect immediately
       const { data } = await supabase.auth.getUser()
       if (data.user?.confirmed_at) {
-        router.push('/dashboard')
+        // メール確認不要の場合：ゲストデータを移行してダッシュボードへ
+        await migrateGuestData(data.user.id, supabase)
+        window.location.href = '/dashboard'
       } else {
         setDone(true)
       }

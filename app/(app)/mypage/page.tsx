@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, CheckSquare, FileText, Library, LogOut, User } from 'lucide-react'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { BookOpen, CheckSquare, FileText, Library, LogOut, User, UserPlus } from 'lucide-react'
+import { useAuthContext } from '@/lib/context/AuthContext'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
 import { BookCard } from '@/components/books/BookCard'
@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
 
 export default function MyPage() {
-  const { user, loading: authLoading, signOut } = useAuth()
+  const { user, isGuest, authLoading, signOut } = useAuthContext()
   const { books } = useBooks()
   const { items } = useActionItems()
 
@@ -66,15 +66,37 @@ export default function MyPage() {
       )}
 
       {/* Actions */}
-      <div className="bg-card border border-border rounded-xl divide-y divide-border">
-        <button
-          type="button"
-          onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
-          className="w-full flex items-center gap-3 px-4 py-4 text-left text-destructive hover:bg-destructive/5 transition-colors rounded-xl"
-        >
-          <LogOut size={16} />
-          <span className="text-sm font-medium">ログアウト</span>
-        </button>
+      <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
+        {isGuest ? (
+          <>
+            <Link
+              href="/register"
+              className="w-full flex items-center gap-3 px-4 py-4 text-left text-primary hover:bg-primary/5 transition-colors"
+            >
+              <UserPlus size={16} />
+              <div>
+                <p className="text-sm font-medium">アカウントを作成する</p>
+                <p className="text-xs text-muted-foreground">本・メモのデータを引き継げます</p>
+              </div>
+            </Link>
+            <Link
+              href="/login"
+              className="w-full flex items-center gap-3 px-4 py-4 text-left text-muted-foreground hover:bg-secondary transition-colors"
+            >
+              <User size={16} />
+              <span className="text-sm font-medium">ログイン</span>
+            </Link>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
+            className="w-full flex items-center gap-3 px-4 py-4 text-left text-destructive hover:bg-destructive/5 transition-colors"
+          >
+            <LogOut size={16} />
+            <span className="text-sm font-medium">ログアウト</span>
+          </button>
+        )}
       </div>
     </div>
   )

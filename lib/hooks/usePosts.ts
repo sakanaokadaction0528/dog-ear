@@ -3,14 +3,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { previewPosts, previewWants } from '@/lib/preview/store'
+import { useAuthContext } from '@/lib/context/AuthContext'
 import type { Post } from '@/lib/types/app.types'
 
-const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 const PREVIEW_USER_ID = 'preview'
 
 let postsCache: (Post & { is_wanted: boolean })[] | null = null
 
 export function usePosts() {
+  const { isGuest } = useAuthContext()
+  const IS_PREVIEW = PREVIEW_ENABLED && isGuest
   const [posts, setPosts] = useState<(Post & { is_wanted: boolean })[]>(postsCache ?? [])
   const [loading, setLoading] = useState(postsCache === null)
 

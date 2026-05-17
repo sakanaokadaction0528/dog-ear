@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { previewActions } from '@/lib/preview/store'
+import { useAuthContext } from '@/lib/context/AuthContext'
 import type { ActionItem, ActionItemInsert } from '@/lib/types/app.types'
 
-const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 
 let allItemsCache: ActionItem[] | null = null
 let allItemsCacheTime = 0
@@ -13,6 +14,8 @@ const CACHE_TTL = 60_000
 const FETCH_TIMEOUT = 4000
 
 export function useActionItems(bookId?: string) {
+  const { isGuest } = useAuthContext()
+  const IS_PREVIEW = PREVIEW_ENABLED && isGuest
   const [items, setItems] = useState<ActionItem[]>(() => {
     if (IS_PREVIEW) {
       return bookId ? previewActions.getByBook(bookId) : previewActions.getAll()
