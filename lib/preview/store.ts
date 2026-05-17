@@ -3,7 +3,7 @@
  * Survives full page reloads. Sufficient for demo/preview use.
  */
 
-import type { BookWithNoteCount, ReadingNote, ActionItem, BookStatus, ActionCategory, Priority } from '@/lib/types/app.types'
+import type { BookWithNoteCount, ReadingNote, ActionItem, Post, Want, AISummaryRow, BookStatus, ActionCategory, Priority } from '@/lib/types/app.types'
 
 function uuid(): string {
   return crypto.randomUUID()
@@ -205,5 +205,108 @@ export const previewActions = {
   },
   deleteByBook: (bookId: string) => {
     saveActions(getActions().filter((a) => a.book_id !== bookId))
+  },
+}
+
+// ---- Posts ----
+
+const POSTS_KEY = 'dog-ear-preview-posts'
+const WANTS_KEY = 'dog-ear-preview-wants'
+
+function getPosts(): Post[] {
+  return load<Post[]>(POSTS_KEY, [])
+}
+function savePosts(posts: Post[]) {
+  save(POSTS_KEY, posts)
+}
+function getWants(): Want[] {
+  return load<Want[]>(WANTS_KEY, [])
+}
+function saveWants(wants: Want[]) {
+  save(WANTS_KEY, wants)
+}
+
+type PostCreateInput = {
+  book_id: string | null
+  book_title: string
+  book_author: string
+  comment: string
+  image_url: string | null
+}
+
+export const previewPosts = {
+  getAll: () =>
+    [...getPosts()].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ),
+  create: (values: PostCreateInput): Post => {
+    const post: Post = {
+      id: uuid(),
+      user_id: 'preview',
+      created_at: now(),
+      want_count: 0,
+      ...values,
+    }
+    savePosts([post, ...getPosts()])
+    return post
+  },
+  delete: (id: string) => {
+    savePosts(getPosts().filter((p) => p.id !== id))
+    saveWants(getWants().filter((w) => w.post_id !== id))
+  },
+  incrementWant: (postId: string, delta: number) => {
+    savePosts(
+      getPosts().map((p) =>
+        p.id === postId ? { ...p, want_count: Math.max(0, p.want_count + delta) } : p
+      )
+    )
+  },
+}
+
+// ---- AI Summaries ----
+
+const SUMMARIES_KEY = 'dog-ear-preview-summaries'
+
+function getSummaries(): AISummaryRow[] {
+  return load<AISummaryRow[]>(SUMMARIES_KEY, [])
+}
+function saveSummaries(rows: AISummaryRow[]) {
+  save(SUMMARIES_KEY, rows)
+}
+
+export const previewSummaries = {
+  getByBook: (bookId: string) =>
+    [...getSummaries()]
+      .filter((s) => s.book_id === bookId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+  create: (bookId: string, content: unknown): AISummaryRow => {
+    const row: AISummaryRow = {
+      id: uuid(),
+      book_id: bookId,
+      summary_type: 'full',
+      content: content as AISummaryRow['content'],
+      created_at: now(),
+    }
+    saveSummaries([row, ...getSummaries()])
+    return row
+  },
+}
+
+export const previewWants = {
+  getByUser: (userId: string) => getWants().filter((w) => w.user_id === userId),
+  hasWanted: (postId: string, userId: string) =>
+    getWants().some((w) => w.post_id === postId && w.user_id === userId),
+  toggle: (postId: string, userId: string): boolean => {
+    const existing = getWants().find((w) => w.post_id === postId && w.user_id === userId)
+    if (existing) {
+      saveWants(getWants().filter((w) => w.id !== existing.id))
+      previewPosts.incrementWant(postId, -1)
+      return false
+    } else {
+      const want: Want = { id: uuid(), post_id: postId, user_id: userId, created_at: now() }
+      saveWants([want, ...getWants()])
+      previewPosts.incrementWant(postId, 1)
+      return true
+    }
   },
 }

@@ -87,6 +87,49 @@ CREATE TABLE IF NOT EXISTS public.action_items (
 );
 
 -- ─────────────────────────────────────────────
+-- 5. posts テーブル（SNS投稿）
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.posts (
+  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     UUID        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  book_id     UUID        REFERENCES public.books(id) ON DELETE SET NULL,
+  book_title  TEXT        NOT NULL,
+  book_author TEXT        NOT NULL DEFAULT '',
+  comment     TEXT        NOT NULL DEFAULT '',
+  image_url   TEXT,
+  want_count  INTEGER     NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ─────────────────────────────────────────────
+-- 6. wants テーブル（読みたい！リアクション）
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.wants (
+  id         UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  post_id    UUID        REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
+  user_id    UUID        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (post_id, user_id)
+);
+
+-- want_count を wants の INSERT/DELETE で自動同期するトリガー
+CREATE OR REPLACE FUNCTION public.handle_want_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.posts SET want_count = want_count + 1 WHERE id = NEW.post_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE public.posts SET want_count = GREATEST(want_count - 1, 0) WHERE id = OLD.post_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER wants_sync_count
+  AFTER INSERT OR DELETE ON public.wants
+  FOR EACH ROW EXECUTE FUNCTION public.handle_want_count();
+
+-- ─────────────────────────────────────────────
 -- インデックス
 -- ─────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_books_user_id         ON public.books(user_id);
@@ -98,3 +141,7 @@ CREATE INDEX IF NOT EXISTS idx_action_items_user     ON public.action_items(user
 CREATE INDEX IF NOT EXISTS idx_action_items_book     ON public.action_items(book_id);
 CREATE INDEX IF NOT EXISTS idx_action_items_category ON public.action_items(category);
 CREATE INDEX IF NOT EXISTS idx_action_items_completed ON public.action_items(completed);
+CREATE INDEX IF NOT EXISTS idx_posts_user_id         ON public.posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at      ON public.posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_wants_post_id         ON public.wants(post_id);
+CREATE INDEX IF NOT EXISTS idx_wants_user_id         ON public.wants(user_id);

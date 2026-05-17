@@ -1,3 +1,4 @@
+import { BookOpen, Star, Lightbulb, Zap, Megaphone, FileText, PlayCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import type { AISummaryContent } from '@/lib/types/app.types'
@@ -14,7 +15,8 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            📋 本全体の要約
+            <BookOpen size={15} className="text-primary" />
+            本全体の要約
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -27,7 +29,8 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              🎯 重要ポイント・学び
+              <Star size={15} className="text-primary" />
+              重要ポイント・学び
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -48,14 +51,15 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              💡 気づき・インサイト
+              <Lightbulb size={15} className="text-primary" />
+              気づき・インサイト
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
               {content.personal_insights.map((insight, i) => (
                 <li key={i} className="flex gap-2 text-sm">
-                  <span className="shrink-0">✦</span>
+                  <span className="text-accent shrink-0">—</span>
                   <span className="text-foreground leading-relaxed">{insight}</span>
                 </li>
               ))}
@@ -69,7 +73,8 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              🚀 AI提案アクション
+              <Zap size={15} className="text-primary" />
+              AI提案アクション
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -100,14 +105,16 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              📣 発信ネタ
+              <Megaphone size={15} className="text-primary" />
+              発信ネタ
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {content.content_ideas.note?.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                  ✏️ note記事ネタ
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <FileText size={12} />
+                  note記事ネタ
                 </p>
                 <ul className="space-y-1.5">
                   {content.content_ideas.note.map((idea, i) => (
@@ -123,8 +130,9 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
               <>
                 <Separator />
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    🎬 YouTubeネタ
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                    <PlayCircle size={12} />
+                    YouTubeネタ
                   </p>
                   <ul className="space-y-1.5">
                     {content.content_ideas.youtube.map((idea, i) => (

@@ -74,3 +74,36 @@ CREATE POLICY "actions_update_own" ON public.action_items
 
 CREATE POLICY "actions_delete_own" ON public.action_items
   FOR DELETE USING (auth.uid() = user_id);
+
+-- ─────────────────────────────────────────────
+-- posts: 全員が閲覧可、自分の投稿のみ作成・削除可
+-- ─────────────────────────────────────────────
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "posts_select_all" ON public.posts
+  FOR SELECT USING (true);
+
+CREATE POLICY "posts_insert_own" ON public.posts
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "posts_delete_own" ON public.posts
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- want_count はトリガーが更新するため UPDATE は system のみ（ポリシーなし = DENY）
+-- 明示的に自分の投稿のみ UPDATE 可にしたい場合は以下を追加:
+-- CREATE POLICY "posts_update_own" ON public.posts
+--   FOR UPDATE USING (auth.uid() = user_id);
+
+-- ─────────────────────────────────────────────
+-- wants: 全員が閲覧可、自分の want のみ作成・削除可
+-- ─────────────────────────────────────────────
+ALTER TABLE public.wants ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "wants_select_all" ON public.wants
+  FOR SELECT USING (true);
+
+CREATE POLICY "wants_insert_own" ON public.wants
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "wants_delete_own" ON public.wants
+  FOR DELETE USING (auth.uid() = user_id);

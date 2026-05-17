@@ -1,13 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { noteFormSchema, type NoteFormValues } from '@/lib/validators/note'
 import { todayISO } from '@/lib/utils/date'
 import { ImportanceStars } from './ImportanceStars'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 interface NoteFormProps {
@@ -17,6 +18,10 @@ interface NoteFormProps {
 }
 
 export function NoteForm({ defaultValues, onSubmit, submitLabel = '保存' }: NoteFormProps) {
+  const [detailOpen, setDetailOpen] = useState(
+    !!(defaultValues?.insight || defaultValues?.personal_relevance || defaultValues?.action_idea)
+  )
+
   const {
     register,
     handleSubmit,
@@ -38,25 +43,19 @@ export function NoteForm({ defaultValues, onSubmit, submitLabel = '保存' }: No
   })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-4 pb-8">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="read_date">
-            読んだ日 <span className="text-destructive">*</span>
-          </Label>
-          <Input id="read_date" type="date" {...register('read_date')} />
-          {errors.read_date && (
-            <p className="text-xs text-destructive">{errors.read_date.message}</p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="read_range">読んだ範囲</Label>
-          <Input id="read_range" placeholder="例: p.1-50" {...register('read_range')} />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>重要度</Label>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-4 pb-8">
+      {/* 日付・範囲・重要度 を1行に */}
+      <div className="flex items-center gap-2">
+        <Input
+          type="date"
+          className="w-36 shrink-0 text-sm"
+          {...register('read_date')}
+        />
+        <Input
+          placeholder="範囲 (例: p.1-50)"
+          className="flex-1 text-sm"
+          {...register('read_range')}
+        />
         <Controller
           name="importance"
           control={control}
@@ -65,56 +64,63 @@ export function NoteForm({ defaultValues, onSubmit, submitLabel = '保存' }: No
           )}
         />
       </div>
+      {errors.read_date && (
+        <p className="text-xs text-destructive -mt-2">{errors.read_date.message}</p>
+      )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="quote">印象に残った文章</Label>
-        <Textarea
-          id="quote"
-          placeholder="本から引用した文章や印象に残ったフレーズ..."
-          rows={3}
-          {...register('quote')}
-        />
-      </div>
+      {/* メモ（メイン） */}
+      <Textarea
+        placeholder="読んで感じたこと、気づいたこと、まとめ..."
+        rows={6}
+        autoFocus
+        {...register('memo')}
+      />
 
-      <div className="space-y-1.5">
-        <Label htmlFor="memo">内容メモ</Label>
-        <Textarea
-          id="memo"
-          placeholder="読んだ内容のまとめや要点..."
-          rows={4}
-          {...register('memo')}
-        />
-      </div>
+      {/* 引用 */}
+      <Textarea
+        placeholder="印象に残った一文（引用）"
+        rows={2}
+        {...register('quote')}
+      />
 
-      <div className="space-y-1.5">
-        <Label htmlFor="insight">気づき</Label>
-        <Textarea
-          id="insight"
-          placeholder="読んで気づいたこと、ハッとしたこと..."
-          rows={3}
-          {...register('insight')}
-        />
-      </div>
+      {/* 詳細トグル */}
+      <button
+        type="button"
+        onClick={() => setDetailOpen((v) => !v)}
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {detailOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        {detailOpen ? '詳細を閉じる' : '詳細を追加（気づき・自分との関連・行動アイデア）'}
+      </button>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="personal_relevance">今の自分との関連</Label>
-        <Textarea
-          id="personal_relevance"
-          placeholder="今の自分の状況・仕事・生活にどう関係するか..."
-          rows={3}
-          {...register('personal_relevance')}
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="action_idea">行動に移せそうなこと</Label>
-        <Textarea
-          id="action_idea"
-          placeholder="この内容から実際にやってみたいこと..."
-          rows={2}
-          {...register('action_idea')}
-        />
-      </div>
+      {detailOpen && (
+        <div className="space-y-4 pt-1 border-t border-border">
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground font-medium">気づき</p>
+            <Textarea
+              placeholder="読んでハッとしたこと..."
+              rows={2}
+              {...register('insight')}
+            />
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground font-medium">今の自分との関連</p>
+            <Textarea
+              placeholder="自分の状況・仕事・生活にどう関係するか..."
+              rows={2}
+              {...register('personal_relevance')}
+            />
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground font-medium">行動アイデア</p>
+            <Textarea
+              placeholder="実際にやってみたいこと..."
+              rows={2}
+              {...register('action_idea')}
+            />
+          </div>
+        </div>
+      )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? '保存中...' : submitLabel}

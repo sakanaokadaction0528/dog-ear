@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useBook, useBooks } from '@/lib/hooks/useBooks'
 import { useNotes } from '@/lib/hooks/useNotes'
 import { useAISummary } from '@/lib/hooks/useAISummary'
+import { usePosts } from '@/lib/hooks/usePosts'
 import { NoteCard } from '@/components/notes/NoteCard'
 import { AISummaryCard } from '@/components/ai/AISummaryCard'
 import { GenerateSummaryButton } from '@/components/ai/GenerateSummaryButton'
@@ -15,6 +18,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PostForm } from '@/components/posts/PostForm'
 import type { BookStatus } from '@/lib/types/app.types'
 
 export default function BookDetailPage() {
@@ -23,7 +27,9 @@ export default function BookDetailPage() {
   const { notes, loading: notesLoading, deleteNote } = useNotes(bookId)
   const { latestContent, generating, error, generateSummary, summaries } = useAISummary(bookId)
   const { deleteBook } = useBooks()
+  const { createPost } = usePosts()
   const router = useRouter()
+  const [showPostForm, setShowPostForm] = useState(false)
 
   async function handleDeleteNote(noteId: string) {
     if (!confirm('このメモを削除しますか？')) return
@@ -50,6 +56,20 @@ export default function BookDetailPage() {
   async function handleGenerate() {
     await generateSummary()
     if (!error) toast.success('AI要約を生成しました')
+  }
+
+  async function handlePost(values: { comment: string; image_url: string | null }) {
+    if (!book) return
+    await createPost({
+      book_id: bookId,
+      book_title: book.title,
+      book_author: book.author,
+      comment: values.comment,
+      image_url: values.image_url,
+    })
+    setShowPostForm(false)
+    toast.success('投稿しました！')
+    router.push('/feed')
   }
 
   if (bookLoading) return <LoadingSpinner />
@@ -149,6 +169,27 @@ export default function BookDetailPage() {
 
         {/* Book Info Tab */}
         <TabsContent value="info" className="mt-0 px-4 pt-4 pb-4 space-y-5">
+          {/* Post form or button */}
+          {showPostForm ? (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <PostForm
+                bookTitle={book.title}
+                bookAuthor={book.author}
+                onSubmit={handlePost}
+                onCancel={() => setShowPostForm(false)}
+              />
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => setShowPostForm(true)}
+            >
+              <Share2 size={15} />
+              おすすめを投稿する
+            </Button>
+          )}
+
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">タイトル</p>

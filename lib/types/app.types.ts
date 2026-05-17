@@ -34,6 +34,26 @@ export interface AISummaryContent {
   }
 }
 
+// SNS types
+export type Post = {
+  id: string
+  user_id: string
+  book_id: string | null
+  book_title: string
+  book_author: string
+  comment: string
+  image_url: string | null
+  want_count: number
+  created_at: string
+}
+
+export type Want = {
+  id: string
+  post_id: string
+  user_id: string
+  created_at: string
+}
+
 // Label maps for display
 export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
   unread: '未読',
