@@ -1,6 +1,5 @@
-import { BookOpen, Star, Lightbulb, Zap, Megaphone, FileText, PlayCircle } from 'lucide-react'
+import { BookOpen, Star, Lightbulb, Zap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import type { AISummaryContent } from '@/lib/types/app.types'
 
 interface AISummaryCardProps {
@@ -96,55 +95,6 @@ export function AISummaryCard({ content, generatedAt }: AISummaryCardProps) {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Content Ideas */}
-      {(content.content_ideas?.note?.length > 0 || content.content_ideas?.youtube?.length > 0) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Megaphone size={15} className="text-primary" />
-              発信ネタ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {content.content_ideas.note?.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
-                  <FileText size={12} />
-                  note記事ネタ
-                </p>
-                <ul className="space-y-1.5">
-                  {content.content_ideas.note.map((idea, i) => (
-                    <li key={i} className="text-sm flex gap-2">
-                      <span className="text-muted-foreground shrink-0">•</span>
-                      {idea}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {content.content_ideas.youtube?.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
-                    <PlayCircle size={12} />
-                    YouTubeネタ
-                  </p>
-                  <ul className="space-y-1.5">
-                    {content.content_ideas.youtube.map((idea, i) => (
-                      <li key={i} className="text-sm flex gap-2">
-                        <span className="text-muted-foreground shrink-0">•</span>
-                        {idea}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
           </CardContent>
         </Card>
       )}

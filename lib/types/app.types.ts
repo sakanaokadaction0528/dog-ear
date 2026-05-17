@@ -28,7 +28,7 @@ export interface AISummaryContent {
     priority: Priority
     due_date: string
   }>
-  content_ideas: {
+  content_ideas?: {
     note: string[]
     youtube: string[]
   }
