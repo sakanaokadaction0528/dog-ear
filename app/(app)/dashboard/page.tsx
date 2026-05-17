@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { BookOpen, CheckSquare, Library } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
@@ -26,9 +27,12 @@ export default function DashboardPage() {
   return (
     <div className="px-4 pt-5 pb-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Dog Ear</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">読書を、行動に変えよう</p>
+      <div className="flex items-center gap-2.5">
+        <Image src="/icon-192.png" alt="Dog Ear" width={36} height={36} className="rounded-lg" />
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Dog Ear</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">読書を、行動に変えよう</p>
+        </div>
       </div>
 
       {/* Stats */}
