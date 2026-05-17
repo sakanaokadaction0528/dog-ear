@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { usePosts } from '@/lib/hooks/usePosts'
 import { PostCard } from '@/components/posts/PostCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -8,7 +10,14 @@ import { TopBar } from '@/components/layout/TopBar'
 import { toast } from 'sonner'
 
 export default function FeedPage() {
-  const { posts, loading, toggleWant, deletePost } = usePosts()
+  const { posts, loading, toggleWant, deletePost, refetch } = usePosts()
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   async function handleToggleWant(postId: string) {
     try {
@@ -30,7 +39,18 @@ export default function FeedPage() {
 
   return (
     <div>
-      <TopBar title="フィード" />
+      <TopBar
+        title="フィード"
+        rightAction={
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-40"
+          >
+            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+        }
+      />
       <div className="px-4 pt-4 pb-24 space-y-4">
         {loading ? (
           <div className="space-y-4">
