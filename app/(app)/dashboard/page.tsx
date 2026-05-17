@@ -8,7 +8,7 @@ import { useActionItems } from '@/lib/hooks/useActionItems'
 import { BookCard } from '@/components/books/BookCard'
 import { ActionItemCard } from '@/components/actions/ActionItemCard'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { BookCardSkeleton, StatsSkeleton } from '@/components/shared/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
@@ -21,7 +21,22 @@ export default function DashboardPage() {
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
   const pendingTasks = items.filter((i: ActionItem) => !i.completed)
 
-  if (booksLoading) return <LoadingSpinner />
+  if (booksLoading) return (
+    <div className="px-4 pt-5 pb-6 space-y-6">
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-lg bg-muted animate-pulse" />
+        <div className="space-y-1.5">
+          <div className="h-5 w-20 rounded bg-muted animate-pulse" />
+          <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+        </div>
+      </div>
+      <StatsSkeleton />
+      <div className="space-y-2">
+        <BookCardSkeleton />
+        <BookCardSkeleton />
+      </div>
+    </div>
+  )
 
   return (
     <div className="px-4 pt-5 pb-6 space-y-6">
@@ -83,7 +98,7 @@ export default function DashboardPage() {
           )}
         </div>
         {actionsLoading ? (
-          <LoadingSpinner className="py-4" />
+          <div className="space-y-2"><BookCardSkeleton /><BookCardSkeleton /></div>
         ) : pendingTasks.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="py-4 text-center">

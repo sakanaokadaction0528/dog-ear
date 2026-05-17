@@ -6,7 +6,7 @@ import { useUIStore } from '@/lib/stores/uiStore'
 import { BookCard } from '@/components/books/BookCard'
 import { BookFilters } from '@/components/books/BookFilters'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { BookCardSkeleton } from '@/components/shared/Skeleton'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import type { BookWithNoteCount } from '@/lib/types/app.types'
@@ -40,7 +40,9 @@ export default function BooksPage() {
       <BookFilters />
 
       {loading ? (
-        <LoadingSpinner />
+        <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pb-6">
+          {[0,1,2,4].map(i => <BookCardSkeleton key={i} />)}
+        </div>
       ) : filtered.length === 0 ? (
         <EmptyState
          

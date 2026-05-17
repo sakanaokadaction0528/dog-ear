@@ -3,7 +3,7 @@
 import { usePosts } from '@/lib/hooks/usePosts'
 import { PostCard } from '@/components/posts/PostCard'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { PostCardSkeleton } from '@/components/shared/Skeleton'
 import { TopBar } from '@/components/layout/TopBar'
 import { toast } from 'sonner'
 
@@ -33,7 +33,9 @@ export default function FeedPage() {
       <TopBar title="フィード" />
       <div className="px-4 pt-4 pb-24 space-y-4">
         {loading ? (
-          <LoadingSpinner />
+          <div className="space-y-4">
+            {[0,1,2].map(i => <PostCardSkeleton key={i} />)}
+          </div>
         ) : posts.length === 0 ? (
           <EmptyState
             title="まだ投稿がありません"

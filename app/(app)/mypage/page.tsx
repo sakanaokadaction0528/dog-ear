@@ -6,7 +6,7 @@ import { useAuthContext } from '@/lib/context/AuthContext'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
 import { BookCard } from '@/components/books/BookCard'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { StatsSkeleton } from '@/components/shared/Skeleton'
 import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
 
 export default function MyPage() {
@@ -18,7 +18,15 @@ export default function MyPage() {
   const totalNotes = books.reduce((sum: number, b: BookWithNoteCount) => sum + b.note_count, 0)
   const completedTasks = items.filter((i: ActionItem) => i.completed)
 
-  if (authLoading) return <LoadingSpinner />
+  if (authLoading) return (
+    <div className="px-4 pt-6 pb-8 space-y-6">
+      <div className="flex flex-col items-center gap-3 py-4">
+        <div className="w-16 h-16 rounded-full bg-muted animate-pulse" />
+        <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+      </div>
+      <StatsSkeleton />
+    </div>
+  )
 
   return (
     <div className="px-4 pt-6 pb-8 space-y-6">
