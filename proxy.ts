@@ -27,8 +27,8 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Refresh session — must call getUser() not getSession()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
 
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
