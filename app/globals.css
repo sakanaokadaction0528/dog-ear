@@ -137,11 +137,21 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    /* Remove 300ms tap delay on mobile */
+    touch-action: manipulation;
+    /* Prevent overscroll bounce from feeling laggy */
+    overscroll-behavior-y: none;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Remove tap highlight flash on iOS/Android */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Instant active feedback on all interactive elements */
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 }
 
