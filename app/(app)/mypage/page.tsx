@@ -1,10 +1,11 @@
 'use client'
 
-import { BookOpen, CheckSquare, FileText, LogOut, User } from 'lucide-react'
+import Link from 'next/link'
+import { BookOpen, CheckSquare, FileText, Library, LogOut, User } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
-import { Button } from '@/components/ui/button'
+import { BookCard } from '@/components/books/BookCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
 
@@ -45,6 +46,24 @@ export default function MyPage() {
           </div>
         ))}
       </div>
+
+      {/* Recent books */}
+      {books.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <Library size={14} className="text-muted-foreground" />
+              <h2 className="font-semibold text-sm text-foreground">最近追加した本</h2>
+            </div>
+            <Link href="/books" className="text-xs text-primary">すべて見る</Link>
+          </div>
+          <div className="space-y-2">
+            {books.slice(0, 3).map((book: BookWithNoteCount) => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Actions */}
       <div className="bg-card border border-border rounded-xl divide-y divide-border">

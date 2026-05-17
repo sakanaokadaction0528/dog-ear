@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookOpen, CheckSquare, Library } from 'lucide-react'
+import { BookOpen, CheckSquare } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
 import { BookCard } from '@/components/books/BookCard'
@@ -101,21 +101,6 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
-
-      {/* Recent books */}
-      {books.length > 0 && (
-        <section>
-          <div className="flex items-center gap-1.5 mb-3">
-            <Library size={14} className="text-muted-foreground" />
-            <h2 className="font-semibold text-sm text-foreground">最近追加した本</h2>
-          </div>
-          <div className="space-y-2">
-            {books.slice(0, 2).map((book: BookWithNoteCount) => (
-              <BookCard key={book.id} book={book} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {books.length === 0 && (
         <EmptyState
