@@ -2,9 +2,6 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { AuthProvider } from '@/lib/context/AuthContext'
 
-// All app routes require authentication — never statically pre-render
-export const dynamic = 'force-dynamic'
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
