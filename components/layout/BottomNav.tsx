@@ -2,15 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, CheckSquare, Rss, Send } from 'lucide-react'
+import { Home, BookOpen, Rss, Send, User } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 const navItems = [
-  { href: '/dashboard',  icon: Home,        label: 'ホーム' },
-  { href: '/books',      icon: BookOpen,    label: '本棚' },
-  { href: '/actions',    icon: CheckSquare, label: 'タスク' },
-  { href: '/posts/new',  icon: Send,        label: '投稿' },
-  { href: '/feed',       icon: Rss,         label: 'フィード' },
+  { href: '/dashboard',  icon: Home,     label: 'ホーム' },
+  { href: '/books',      icon: BookOpen, label: '本棚' },
+  { href: '/posts/new',  icon: Send,     label: '投稿' },
+  { href: '/feed',       icon: Rss,      label: 'フィード' },
+  { href: '/mypage',     icon: User,     label: 'マイページ' },
 ]
 
 export function BottomNav() {

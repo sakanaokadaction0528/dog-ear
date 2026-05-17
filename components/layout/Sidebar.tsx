@@ -2,24 +2,23 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, CheckSquare, Rss, Send } from 'lucide-react'
+import { Home, BookOpen, Rss, Send, User } from 'lucide-react'
 import Image from 'next/image'
 
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Button } from '@/components/ui/button'
 
 const navItems = [
-  { href: '/dashboard',  icon: Home,        label: 'ダッシュボード' },
-  { href: '/books',      icon: BookOpen,    label: '本棚' },
-  { href: '/actions',    icon: CheckSquare, label: '行動リスト' },
-  { href: '/posts/new',  icon: Send,        label: '投稿' },
-  { href: '/feed',       icon: Rss,         label: 'フィード' },
+  { href: '/dashboard', icon: Home,     label: 'ダッシュボード' },
+  { href: '/books',     icon: BookOpen, label: '本棚' },
+  { href: '/posts/new', icon: Send,     label: '投稿' },
+  { href: '/feed',      icon: Rss,      label: 'フィード' },
+  { href: '/mypage',    icon: User,     label: 'マイページ' },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
 
   return (
     <aside className="hidden md:flex flex-col w-60 min-h-screen bg-card border-r border-border px-3 py-6">
@@ -57,18 +56,10 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User / Sign out */}
+      {/* User */}
       {user && (
         <div className="border-t border-border pt-4 mt-4">
-          <p className="text-xs text-muted-foreground px-3 mb-2 truncate">{user.email}</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground text-xs"
-            onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
-          >
-            ログアウト
-          </Button>
+          <p className="text-xs text-muted-foreground px-3 truncate">{user.email}</p>
         </div>
       )}
     </aside>

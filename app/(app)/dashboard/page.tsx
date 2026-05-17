@@ -2,10 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookOpen, CheckSquare, Library, LogOut } from 'lucide-react'
+import { BookOpen, CheckSquare, Library } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
-import { useAuth } from '@/lib/hooks/useAuth'
 import { BookCard } from '@/components/books/BookCard'
 import { ActionItemCard } from '@/components/actions/ActionItemCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -17,11 +16,9 @@ import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
 export default function DashboardPage() {
   const { books, loading: booksLoading } = useBooks()
   const { items, loading: actionsLoading, toggleComplete } = useActionItems()
-  const { signOut } = useAuth()
 
   const reading = books.filter((b: BookWithNoteCount) => b.status === 'reading')
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
-  const todayTasks = items.filter((i: ActionItem) => !i.completed && i.category === 'today')
   const pendingTasks = items.filter((i: ActionItem) => !i.completed)
 
   if (booksLoading) return <LoadingSpinner />
@@ -31,17 +28,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center gap-2.5">
         <Image src="/icon-192.png" alt="Dog Ear" width={36} height={36} className="rounded-lg" />
-        <div className="flex-1">
+        <div>
           <h1 className="text-xl font-bold text-foreground">Dog Ear</h1>
           <p className="text-sm text-muted-foreground mt-0.5">読書を、行動に変えよう</p>
         </div>
-        <button
-          type="button"
-          onClick={() => { if (confirm('ログアウトしますか？')) signOut() }}
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:bg-secondary transition-colors"
-        >
-          <LogOut size={18} />
-        </button>
       </div>
 
       {/* Stats */}
@@ -83,21 +73,21 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Today's tasks */}
+      {/* Tasks */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <CheckSquare size={14} className="text-muted-foreground" />
-            <h2 className="font-semibold text-sm text-foreground">今日やること</h2>
-          </div>
-          <Link href="/actions" className="text-xs text-primary">すべて見る</Link>
+        <div className="flex items-center gap-1.5 mb-3">
+          <CheckSquare size={14} className="text-muted-foreground" />
+          <h2 className="font-semibold text-sm text-foreground">タスク</h2>
+          {pendingTasks.length > 0 && (
+            <span className="ml-auto text-xs text-muted-foreground">{pendingTasks.length}件</span>
+          )}
         </div>
         {actionsLoading ? (
           <LoadingSpinner className="py-4" />
-        ) : todayTasks.length === 0 ? (
+        ) : pendingTasks.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="py-4 text-center">
-              <p className="text-sm text-muted-foreground">今日のタスクはありません</p>
+              <p className="text-sm text-muted-foreground">タスクはありません</p>
               <p className="text-xs text-muted-foreground mt-1">
                 メモに行動アイデアを書くと自動追加されます
               </p>
@@ -105,7 +95,7 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {todayTasks.slice(0, 3).map((item: ActionItem) => (
+            {pendingTasks.map((item: ActionItem) => (
               <ActionItemCard key={item.id} item={item} onToggle={toggleComplete} />
             ))}
           </div>
