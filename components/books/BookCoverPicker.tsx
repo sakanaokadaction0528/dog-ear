@@ -6,9 +6,8 @@ import { ImagePlus, X, Loader2 } from 'lucide-react'
 type Candidate = { thumbnail: string }
 
 async function fetchCovers(title: string, author: string): Promise<Candidate[]> {
-  const parts = [`intitle:${title}`]
-  if (author) parts.push(`inauthor:${author}`)
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(parts.join('+'))}&maxResults=8`
+  const q = [title, author].filter(Boolean).join(' ')
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json()
