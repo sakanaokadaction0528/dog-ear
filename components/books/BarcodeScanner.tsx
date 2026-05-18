@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
-import { NotFoundException } from '@zxing/library'
+import { BarcodeFormat, DecodeHintType } from '@zxing/library'
 import { X, Loader2 } from 'lucide-react'
 
 interface BarcodeScannerProps {
@@ -10,41 +10,63 @@ interface BarcodeScannerProps {
   onClose: () => void
 }
 
+const HINTS = new Map<DecodeHintType, unknown>([
+  [DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8]],
+  [DecodeHintType.TRY_HARDER, true],
+])
+
 export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null)
+  const controlsRef = useRef<{ stop: () => void } | null>(null)
+  const onDetectedRef = useRef(onDetected)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
+  // Keep ref current so the callback closure doesn't go stale
+  useEffect(() => { onDetectedRef.current = onDetected }, [onDetected])
+
   useEffect(() => {
-    const reader = new BrowserMultiFormatReader()
-    readerRef.current = reader
+    if (!videoRef.current) return
+
+    const reader = new BrowserMultiFormatReader(HINTS)
+    let stopped = false
 
     reader.decodeFromConstraints(
       { video: { facingMode: 'environment' } },
-      videoRef.current!,
+      videoRef.current,
       (result, err) => {
+        if (stopped) return
         if (result) {
           const text = result.getText()
-          // ISBN-13 (978/979始まり) または ISBN-10
           if (/^97[89]\d{10}$/.test(text) || /^\d{9}[\dX]$/.test(text)) {
-            onDetected(text)
+            stopped = true
+            controlsRef.current?.stop()
+            onDetectedRef.current(text)
           }
         }
-        if (err && !(err instanceof NotFoundException)) {
+        // NotFoundException is expected when no barcode is in frame — ignore it
+        if (err && err.name !== 'NotFoundException') {
           console.error('[BarcodeScanner]', err)
         }
       }
-    ).then(() => setReady(true))
-      .catch((e) => {
-        console.error('[BarcodeScanner] init error', e)
-        setError('カメラを起動できませんでした。カメラのアクセスを許可してください。')
-      })
+    ).then((controls) => {
+      if (stopped) {
+        controls.stop()
+        return
+      }
+      controlsRef.current = controls
+      setReady(true)
+    }).catch((e) => {
+      console.error('[BarcodeScanner] init error', e)
+      setError('カメラを起動できませんでした。カメラへのアクセスを許可してください。')
+    })
 
     return () => {
-      BrowserMultiFormatReader.releaseAllStreams()
+      stopped = true
+      controlsRef.current?.stop()
+      controlsRef.current = null
     }
-  }, [onDetected])
+  }, []) // run once on mount
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
@@ -62,19 +84,18 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
           ref={videoRef}
           className="w-full h-full object-cover"
           playsInline
+          autoPlay
           muted
         />
 
         {/* Scanning frame overlay */}
         {!error && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative w-64 h-40">
-              {/* Corners */}
+            <div className="relative w-72 h-44">
               <span className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg" />
               <span className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg" />
               <span className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg" />
               <span className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg" />
-              {/* Scan line */}
               {ready && (
                 <span className="absolute left-2 right-2 top-1/2 h-0.5 bg-primary/80 animate-pulse" />
               )}
