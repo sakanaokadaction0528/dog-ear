@@ -212,6 +212,7 @@ export default function BookDetailPage() {
 
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
             <BookCoverPicker
+              bookId={bookId}
               bookTitle={book.title}
               bookAuthor={book.author}
               coverUrl={book.cover_url}

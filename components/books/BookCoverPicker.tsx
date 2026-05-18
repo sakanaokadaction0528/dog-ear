@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { ImagePlus, X, Loader2 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Camera, ImagePlus, Loader2, X } from 'lucide-react'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { useAuthContext } from '@/lib/context/AuthContext'
 
 type Candidate = { thumbnail: string }
 
@@ -12,16 +14,38 @@ async function fetchCovers(q: string): Promise<Candidate[]> {
   return json.items ?? []
 }
 
+async function compressCover(file: File): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const W = 400, H = 600
+      const scale = Math.min(W / img.width, H / img.height, 1)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85)
+    }
+    img.src = url
+  })
+}
+
 interface BookCoverPickerProps {
+  bookId: string
   bookTitle: string
   bookAuthor: string
   coverUrl: string | null
   onSelect: (url: string | null) => Promise<void>
 }
 
-export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: BookCoverPickerProps) {
+export function BookCoverPicker({ bookId, bookTitle, bookAuthor, coverUrl, onSelect }: BookCoverPickerProps) {
+  const { user } = useAuthContext()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searched, setSearched] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -31,7 +55,6 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
     setSearched(false)
     setErrorMsg(null)
     try {
-      // タイトルで検索、0件なら著者名でも試す
       let results = await fetchCovers(bookTitle)
       if (results.length === 0 && bookAuthor) {
         results = await fetchCovers(bookAuthor)
@@ -43,6 +66,30 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
     } finally {
       setLoading(false)
       setSearched(true)
+    }
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setUploading(true)
+    setErrorMsg(null)
+    try {
+      const compressed = await compressCover(file)
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) throw new Error('no client')
+      const path = `${user.id}/${bookId}.jpg`
+      const { error } = await supabase.storage
+        .from('covers')
+        .upload(path, compressed, { contentType: 'image/jpeg', upsert: true })
+      if (error) throw error
+      const { data } = supabase.storage.from('covers').getPublicUrl(path)
+      await onSelect(`${data.publicUrl}?t=${Date.now()}`)
+    } catch {
+      setErrorMsg('アップロードに失敗しました')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -59,6 +106,8 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
     setSaving(false)
   }
 
+  const busy = loading || uploading || saving
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">表紙画像</p>
@@ -74,16 +123,25 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
             <button
               type="button"
               onClick={handleSearch}
-              disabled={loading || saving}
+              disabled={busy}
               className="flex items-center gap-1.5 text-xs text-primary hover:opacity-70 transition-opacity disabled:opacity-40"
             >
               {loading ? <Loader2 size={12} className="animate-spin" /> : <ImagePlus size={12} />}
-              変更
+              検索して変更
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              className="flex items-center gap-1.5 text-xs text-primary hover:opacity-70 transition-opacity disabled:opacity-40"
+            >
+              {uploading ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+              写真から変更
             </button>
             <button
               type="button"
               onClick={handleRemove}
-              disabled={saving}
+              disabled={busy}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
             >
               <X size={12} />
@@ -92,16 +150,35 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={loading || saving}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs disabled:opacity-40"
-        >
-          {loading ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
-          表紙を検索して設定
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleSearch}
+            disabled={busy}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs disabled:opacity-40"
+          >
+            {loading ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
+            検索して設定
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs disabled:opacity-40"
+          >
+            {uploading ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
+            写真から設定
+          </button>
+        </div>
       )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleUpload}
+      />
 
       {errorMsg && (
         <p className="text-xs text-destructive">{errorMsg}</p>
@@ -119,7 +196,7 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
                 key={i}
                 type="button"
                 onClick={() => handleSelect(c.thumbnail)}
-                disabled={saving}
+                disabled={busy}
                 className="shrink-0 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all disabled:opacity-40"
               >
                 <img src={c.thumbnail} alt="" className="w-14 h-20 object-cover" />
