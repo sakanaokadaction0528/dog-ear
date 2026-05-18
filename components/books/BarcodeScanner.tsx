@@ -27,18 +27,30 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
 
     async function start() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        })
+        // Try back camera first; fall back to any camera if constraints fail
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+          })
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        }
         if (!active) { stream.getTracks().forEach(t => t.stop()); return }
 
         const video = videoRef.current!
         video.srcObject = stream
-        await video.play()
+
+        // Wait for metadata before playing (required on iOS Safari)
+        await new Promise<void>((resolve) => {
+          if (video.readyState >= 1) { resolve(); return }
+          video.onloadedmetadata = () => resolve()
+        })
+
+        try {
+          await video.play()
+        } catch {
+          // iOS may throw AbortError here but the stream still works; continue
+        }
         if (!active) return
         setReady(true)
 
@@ -105,7 +117,15 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         rafId = requestAnimationFrame(tick)
       } catch (e) {
         console.error('[BarcodeScanner]', e)
-        if (active) setError('カメラを起動できませんでした。カメラへのアクセスを許可してください。')
+        if (!active) return
+        const name = (e as DOMException)?.name
+        if (name === 'NotAllowedError') {
+          setError('カメラへのアクセスが拒否されています。設定からカメラを許可してください。')
+        } else if (name === 'NotFoundError') {
+          setError('カメラが見つかりません。')
+        } else {
+          setError('カメラを起動できませんでした。')
+        }
       }
     }
 
