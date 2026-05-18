@@ -5,11 +5,10 @@ import { ImagePlus, X, Loader2 } from 'lucide-react'
 
 type Candidate = { thumbnail: string }
 
-async function fetchCovers(title: string, author: string): Promise<Candidate[]> {
-  const q = title || author
+async function fetchCovers(q: string): Promise<Candidate[]> {
   const res = await fetch(`/api/book-covers?q=${encodeURIComponent(q)}`)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json()
+  if (json.apiError) throw new Error(json.apiError)
   return json.items ?? []
 }
 
@@ -25,14 +24,21 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   async function handleSearch() {
     setLoading(true)
     setSearched(false)
+    setErrorMsg(null)
     try {
-      const results = await fetchCovers(bookTitle, bookAuthor)
+      // タイトルで検索、0件なら著者名でも試す
+      let results = await fetchCovers(bookTitle)
+      if (results.length === 0 && bookAuthor) {
+        results = await fetchCovers(bookAuthor)
+      }
       setCandidates(results)
-    } catch {
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : '検索に失敗しました')
       setCandidates([])
     } finally {
       setLoading(false)
@@ -97,7 +103,10 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
         </button>
       )}
 
-      {searched && candidates.length === 0 && !loading && (
+      {errorMsg && (
+        <p className="text-xs text-destructive">{errorMsg}</p>
+      )}
+      {searched && !errorMsg && candidates.length === 0 && !loading && (
         <p className="text-xs text-muted-foreground">候補が見つかりませんでした</p>
       )}
 
