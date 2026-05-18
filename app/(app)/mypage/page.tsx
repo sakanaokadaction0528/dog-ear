@@ -46,11 +46,11 @@ export default function MyPage() {
             <Pencil size={16} />
           </Link>
         )}
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="アバター" className="w-full h-full object-cover" />
           ) : (
-            <User size={32} className="text-primary" />
+            <User size={40} className="text-primary" />
           )}
         </div>
         <div className="text-center">
