@@ -62,10 +62,10 @@ export function PostCard({ post, onToggleWant, onDelete, isOwner }: PostCardProp
           className="flex items-center gap-1.5 min-w-0 hover:opacity-70 transition-opacity"
         >
           {post.poster_avatar_url ? (
-            <img src={post.poster_avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+            <img src={post.poster_avatar_url} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <User size={11} className="text-muted-foreground" />
+            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <User size={14} className="text-muted-foreground" />
             </div>
           )}
           <span className="text-xs text-muted-foreground truncate max-w-[100px]">
