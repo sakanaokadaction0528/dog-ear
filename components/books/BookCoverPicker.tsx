@@ -6,20 +6,11 @@ import { ImagePlus, X, Loader2 } from 'lucide-react'
 type Candidate = { thumbnail: string }
 
 async function fetchCovers(title: string, author: string): Promise<Candidate[]> {
-  const q = encodeURIComponent(title || author)
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=10`
-  const res = await fetch(url)
+  const q = title || author
+  const res = await fetch(`/api/book-covers?q=${encodeURIComponent(q)}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json()
-  return (json.items ?? [])
-    .filter((item: unknown) => {
-      const v = (item as { volumeInfo?: { imageLinks?: { thumbnail?: string } } }).volumeInfo
-      return v?.imageLinks?.thumbnail
-    })
-    .map((item: unknown) => {
-      const v = (item as { volumeInfo: { imageLinks: { thumbnail: string } } }).volumeInfo
-      return { thumbnail: v.imageLinks.thumbnail.replace('http://', 'https://') }
-    })
+  return json.items ?? []
 }
 
 interface BookCoverPickerProps {
