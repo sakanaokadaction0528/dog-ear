@@ -6,24 +6,21 @@ import { ImagePlus, X, Loader2 } from 'lucide-react'
 type Candidate = { thumbnail: string }
 
 async function fetchCovers(title: string, author: string): Promise<Candidate[]> {
-  const q = [title, author].filter(Boolean).join(' ')
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&langRestrict=ja&maxResults=6&fields=items(volumeInfo(imageLinks))`
-  try {
-    const res = await fetch(url)
-    if (!res.ok) return []
-    const json = await res.json()
-    return (json.items ?? [])
-      .filter((item: unknown) => {
-        const v = (item as { volumeInfo?: { imageLinks?: { thumbnail?: string } } }).volumeInfo
-        return v?.imageLinks?.thumbnail
-      })
-      .map((item: unknown) => {
-        const v = (item as { volumeInfo: { imageLinks: { thumbnail: string } } }).volumeInfo
-        return { thumbnail: v.imageLinks.thumbnail.replace('http://', 'https://') }
-      })
-  } catch {
-    return []
-  }
+  const parts = [`intitle:${title}`]
+  if (author) parts.push(`inauthor:${author}`)
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(parts.join('+'))}&maxResults=8`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+  return (json.items ?? [])
+    .filter((item: unknown) => {
+      const v = (item as { volumeInfo?: { imageLinks?: { thumbnail?: string } } }).volumeInfo
+      return v?.imageLinks?.thumbnail
+    })
+    .map((item: unknown) => {
+      const v = (item as { volumeInfo: { imageLinks: { thumbnail: string } } }).volumeInfo
+      return { thumbnail: v.imageLinks.thumbnail.replace('http://', 'https://') }
+    })
 }
 
 interface BookCoverPickerProps {
@@ -37,12 +34,20 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [searched, setSearched] = useState(false)
 
   async function handleSearch() {
     setLoading(true)
-    const results = await fetchCovers(bookTitle, bookAuthor)
-    setCandidates(results)
-    setLoading(false)
+    setSearched(false)
+    try {
+      const results = await fetchCovers(bookTitle, bookAuthor)
+      setCandidates(results)
+    } catch {
+      setCandidates([])
+    } finally {
+      setLoading(false)
+      setSearched(true)
+    }
   }
 
   async function handleSelect(url: string) {
@@ -102,6 +107,10 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
         </button>
       )}
 
+      {searched && candidates.length === 0 && !loading && (
+        <p className="text-xs text-muted-foreground">候補が見つかりませんでした</p>
+      )}
+
       {candidates.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs text-muted-foreground">表紙を選んでください</p>
@@ -119,7 +128,7 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
             ))}
             <button
               type="button"
-              onClick={() => setCandidates([])}
+              onClick={() => { setCandidates([]); setSearched(false) }}
               className="shrink-0 w-14 h-20 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             >
               <X size={16} />
