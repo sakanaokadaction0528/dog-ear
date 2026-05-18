@@ -8,79 +8,60 @@ interface BarcodeScannerProps {
   onClose: () => void
 }
 
+const CONTAINER_ID = 'barcode-scanner-container'
+
 export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const onDetectedRef = useRef(onDetected)
+  const scannerRef = useRef<import('html5-qrcode').Html5Qrcode | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
   useEffect(() => { onDetectedRef.current = onDetected }, [onDetected])
 
   useEffect(() => {
-    let active = true
-    let stream: MediaStream | null = null
-    let rafId: number
+    let stopped = false
 
     async function start() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+        if (stopped) return
+
+        const scanner = new Html5Qrcode(CONTAINER_ID, {
+          verbose: false,
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+          ],
         })
-        if (!active) { stream.getTracks().forEach(t => t.stop()); return }
+        scannerRef.current = scanner
 
-        const video = videoRef.current!
-        video.srcObject = stream
-        await video.play()
-        if (!active) return
-        setReady(true)
-
-        // Dynamically import to avoid SSR issues
-        const { MultiFormatReader, BinaryBitmap, HybridBinarizer, HTMLCanvasElementLuminanceSource } =
-          await import('@zxing/library')
-        const reader = new MultiFormatReader()
-        const canvas = canvasRef.current!
-        const ctx = canvas.getContext('2d', { willReadFrequently: true })!
-
-        function tick() {
-          if (!active) return
-          if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth
-            canvas.height = video.videoHeight
-            ctx.drawImage(video, 0, 0)
-            try {
-              const src = new HTMLCanvasElementLuminanceSource(canvas)
-              const bitmap = new BinaryBitmap(new HybridBinarizer(src))
-              const result = reader.decode(bitmap)
-              const text = result.getText()
-              if (/^97[89]\d{10}$/.test(text) || /^\d{9}[\dX]$/.test(text)) {
-                active = false
-                stream?.getTracks().forEach(t => t.stop())
-                onDetectedRef.current(text)
-                return
-              }
-            } catch {
-              // No barcode in this frame — expected, keep scanning
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.7 },
+          (decodedText) => {
+            if (stopped) return
+            const text = decodedText.trim()
+            if (/^97[89]\d{10}$/.test(text) || /^\d{9}[\dX]$/.test(text)) {
+              stopped = true
+              scanner.stop().catch(() => {})
+              onDetectedRef.current(text)
             }
-          }
-          rafId = requestAnimationFrame(tick)
-        }
-        rafId = requestAnimationFrame(tick)
+          },
+          () => { /* no barcode in frame — ignore */ }
+        )
+        if (!stopped) setReady(true)
       } catch (e) {
         console.error('[BarcodeScanner]', e)
-        if (active) setError('カメラを起動できませんでした。カメラへのアクセスを許可してください。')
+        if (!stopped) setError('カメラを起動できませんでした。カメラへのアクセスを許可してください。')
       }
     }
 
     start()
+
     return () => {
-      active = false
-      cancelAnimationFrame(rafId)
-      stream?.getTracks().forEach(t => t.stop())
+      stopped = true
+      scannerRef.current?.stop().catch(() => {})
+      scannerRef.current = null
     }
   }, [])
 
@@ -93,39 +74,21 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         </button>
       </div>
 
-      <div className="flex-1 relative">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          playsInline
-          autoPlay
-          muted
+      <div className="flex-1 relative overflow-hidden">
+        {/* html5-qrcode renders the video inside this div */}
+        <div
+          id={CONTAINER_ID}
+          className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_img]:hidden"
         />
-        {/* Hidden canvas for frame decoding */}
-        <canvas ref={canvasRef} className="hidden" />
-
-        {!error && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative w-72 h-44">
-              <span className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg" />
-              <span className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg" />
-              <span className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg" />
-              <span className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg" />
-              {ready && (
-                <span className="absolute left-2 right-2 top-1/2 h-0.5 bg-primary/80 animate-pulse" />
-              )}
-            </div>
-          </div>
-        )}
 
         {!ready && !error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
             <Loader2 size={32} className="text-white animate-spin" />
           </div>
         )}
 
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center px-8">
+          <div className="absolute inset-0 flex items-center justify-center px-8 bg-black">
             <p className="text-white text-center text-sm">{error}</p>
           </div>
         )}
