@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookOpen, CheckSquare } from 'lucide-react'
+import { BookOpen, CheckSquare, ChevronDown, ChevronUp } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useActionItems } from '@/lib/hooks/useActionItems'
 import { BookCard } from '@/components/books/BookCard'
@@ -16,6 +17,7 @@ import type { BookWithNoteCount, ActionItem } from '@/lib/types/app.types'
 export default function DashboardPage() {
   const { books, loading: booksLoading } = useBooks()
   const { items, loading: actionsLoading, toggleComplete } = useActionItems()
+  const [readingOpen, setReadingOpen] = useState(false)
 
   const reading = books.filter((b: BookWithNoteCount) => b.status === 'reading')
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
@@ -63,31 +65,6 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Currently reading */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <BookOpen size={14} className="text-muted-foreground" />
-            <h2 className="font-semibold text-sm text-foreground">読書中の本</h2>
-          </div>
-          <Link href="/books" className="text-xs text-primary">すべて見る</Link>
-        </div>
-        {reading.length === 0 ? (
-          <div className="bg-card border border-dashed border-border rounded-xl p-5 text-center">
-            <p className="text-sm text-muted-foreground mb-3">読書中の本がありません</p>
-            <Link href="/books/new">
-              <Button size="sm" variant="outline">本を追加する</Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {reading.slice(0, 3).map((book: BookWithNoteCount) => (
-              <BookCard key={book.id} book={book} />
-            ))}
-          </div>
-        )}
-      </section>
-
       {/* Tasks */}
       <section>
         <div className="flex items-center gap-1.5 mb-3">
@@ -114,6 +91,40 @@ export default function DashboardPage() {
               <ActionItemCard key={item.id} item={item} onToggle={toggleComplete} />
             ))}
           </div>
+        )}
+      </section>
+
+      {/* Currently reading (collapsible) */}
+      <section>
+        <button
+          onClick={() => setReadingOpen(v => !v)}
+          className="w-full flex items-center justify-between mb-2"
+        >
+          <div className="flex items-center gap-1.5">
+            <BookOpen size={14} className="text-muted-foreground" />
+            <h2 className="font-semibold text-sm text-foreground">読書中の本</h2>
+            <span className="text-xs text-muted-foreground">({reading.length}冊)</span>
+          </div>
+          {readingOpen
+            ? <ChevronUp size={16} className="text-muted-foreground" />
+            : <ChevronDown size={16} className="text-muted-foreground" />
+          }
+        </button>
+        {readingOpen && (
+          reading.length === 0 ? (
+            <div className="bg-card border border-dashed border-border rounded-xl p-5 text-center">
+              <p className="text-sm text-muted-foreground mb-3">読書中の本がありません</p>
+              <Link href="/books/new">
+                <Button size="sm" variant="outline">本を追加する</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {reading.map((book: BookWithNoteCount) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+            </div>
+          )
         )}
       </section>
 
