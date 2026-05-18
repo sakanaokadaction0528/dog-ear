@@ -26,9 +26,11 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
     let rafId: number
 
     function stopStream() {
-      // Clear srcObject BEFORE stopping tracks so iOS Safari doesn't
-      // render a "This page couldn't load" error on the video element
-      if (videoRef.current) videoRef.current.srcObject = null
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.srcObject = null
+        videoRef.current.load() // reset to blank so iOS doesn't show an error frame
+      }
       stream?.getTracks().forEach(t => t.stop())
       stream = null
     }
@@ -77,7 +79,6 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
               for (const b of barcodes) {
                 if (isValidISBN(b.rawValue)) {
                   active = false
-                  stopStream()
                   onDetectedRef.current(b.rawValue)
                   return
                 }
@@ -117,7 +118,6 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
               const text = result.getText()
               if (isValidISBN(text)) {
                 active = false
-                stopStream()
                 onDetectedRef.current(text)
                 return
               }
