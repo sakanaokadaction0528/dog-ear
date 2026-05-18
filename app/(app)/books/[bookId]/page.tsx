@@ -19,6 +19,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PostForm } from '@/components/posts/PostForm'
+import { BookCoverPicker } from '@/components/books/BookCoverPicker'
 import type { BookStatus } from '@/lib/types/app.types'
 
 export default function BookDetailPage() {
@@ -26,7 +27,7 @@ export default function BookDetailPage() {
   const { book, loading: bookLoading, refetch: refetchBook } = useBook(bookId)
   const { notes, loading: notesLoading, deleteNote } = useNotes(bookId)
   const { latestContent, generating, error, generateSummary, summaries } = useAISummary(bookId)
-  const { deleteBook } = useBooks()
+  const { deleteBook, updateBook } = useBooks()
   const { createPost } = usePosts()
   const router = useRouter()
   const [showPostForm, setShowPostForm] = useState(false)
@@ -200,15 +201,16 @@ export default function BookDetailPage() {
           )}
 
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-            {book.cover_url && (
-              <div className="flex justify-center">
-                <img
-                  src={book.cover_url}
-                  alt={book.title}
-                  className="w-24 h-36 object-cover rounded-lg border border-border shadow-md"
-                />
-              </div>
-            )}
+            <BookCoverPicker
+              bookTitle={book.title}
+              bookAuthor={book.author}
+              coverUrl={book.cover_url}
+              onSelect={async (url) => {
+                await updateBook(bookId, { cover_url: url })
+                await refetchBook()
+              }}
+            />
+            <div className="border-t border-border pt-4" />
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">タイトル</p>
               <p className="font-semibold text-foreground">{book.title}</p>
