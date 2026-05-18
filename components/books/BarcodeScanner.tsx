@@ -8,60 +8,112 @@ interface BarcodeScannerProps {
   onClose: () => void
 }
 
-const CONTAINER_ID = 'barcode-scanner-container'
+function isValidISBN(text: string) {
+  return /^97[89]\d{10}$/.test(text) || /^\d{9}[\dX]$/.test(text)
+}
 
 export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
   const onDetectedRef = useRef(onDetected)
-  const scannerRef = useRef<import('html5-qrcode').Html5Qrcode | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
   useEffect(() => { onDetectedRef.current = onDetected }, [onDetected])
 
   useEffect(() => {
-    let stopped = false
+    let active = true
+    let stream: MediaStream | null = null
+    let rafId: number
 
     async function start() {
       try {
-        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
-        if (stopped) return
-
-        const scanner = new Html5Qrcode(CONTAINER_ID, {
-          verbose: false,
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-          ],
-        })
-        scannerRef.current = scanner
-
-        await scanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.7 },
-          (decodedText) => {
-            if (stopped) return
-            const text = decodedText.trim()
-            if (/^97[89]\d{10}$/.test(text) || /^\d{9}[\dX]$/.test(text)) {
-              stopped = true
-              scanner.stop().catch(() => {})
-              onDetectedRef.current(text)
-            }
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
-          () => { /* no barcode in frame — ignore */ }
-        )
-        if (!stopped) setReady(true)
+        })
+        if (!active) { stream.getTracks().forEach(t => t.stop()); return }
+
+        const video = videoRef.current!
+        video.srcObject = stream
+        await video.play()
+        if (!active) return
+        setReady(true)
+
+        // Native BarcodeDetector (Chrome/Android) — fastest path
+        if ('BarcodeDetector' in window) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const detector = new (window as any).BarcodeDetector({ formats: ['ean_13', 'ean_8', 'isbn'] })
+          const tick = async () => {
+            if (!active) return
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const barcodes: any[] = await detector.detect(video)
+              for (const b of barcodes) {
+                if (isValidISBN(b.rawValue)) {
+                  active = false
+                  stream?.getTracks().forEach(t => t.stop())
+                  onDetectedRef.current(b.rawValue)
+                  return
+                }
+              }
+            } catch { /* no barcode */ }
+            if (active) rafId = requestAnimationFrame(tick)
+          }
+          rafId = requestAnimationFrame(tick)
+          return
+        }
+
+        // ZXing fallback (iOS Safari etc.) — needs explicit EAN-13 hints
+        const {
+          MultiFormatReader, BinaryBitmap, HybridBinarizer,
+          HTMLCanvasElementLuminanceSource, DecodeHintType, BarcodeFormat,
+        } = await import('@zxing/library')
+
+        const hints = new Map()
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8])
+        hints.set(DecodeHintType.TRY_HARDER, true)
+        const reader = new MultiFormatReader()
+        reader.setHints(hints)
+
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+
+        const tick = () => {
+          if (!active) return
+          if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            ctx.drawImage(video, 0, 0)
+            try {
+              const src = new HTMLCanvasElementLuminanceSource(canvas)
+              const bitmap = new BinaryBitmap(new HybridBinarizer(src))
+              const result = reader.decode(bitmap)
+              const text = result.getText()
+              if (isValidISBN(text)) {
+                active = false
+                stream?.getTracks().forEach(t => t.stop())
+                onDetectedRef.current(text)
+                return
+              }
+            } catch { /* no barcode in this frame */ }
+          }
+          rafId = requestAnimationFrame(tick)
+        }
+        rafId = requestAnimationFrame(tick)
       } catch (e) {
         console.error('[BarcodeScanner]', e)
-        if (!stopped) setError('カメラを起動できませんでした。カメラへのアクセスを許可してください。')
+        if (active) setError('カメラを起動できませんでした。カメラへのアクセスを許可してください。')
       }
     }
 
     start()
-
     return () => {
-      stopped = true
-      scannerRef.current?.stop().catch(() => {})
-      scannerRef.current = null
+      active = false
+      cancelAnimationFrame(rafId)
+      stream?.getTracks().forEach(t => t.stop())
     }
   }, [])
 
@@ -74,15 +126,31 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         </button>
       </div>
 
-      <div className="flex-1 relative overflow-hidden">
-        {/* html5-qrcode renders the video inside this div */}
-        <div
-          id={CONTAINER_ID}
-          className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_img]:hidden"
+      <div className="flex-1 relative">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          playsInline
+          autoPlay
+          muted
         />
 
+        {!error && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative w-72 h-44">
+              <span className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg" />
+              <span className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg" />
+              <span className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg" />
+              <span className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg" />
+              {ready && (
+                <span className="absolute left-2 right-2 top-1/2 h-0.5 bg-primary/80 animate-pulse" />
+              )}
+            </div>
+          </div>
+        )}
+
         {!ready && !error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <Loader2 size={32} className="text-white animate-spin" />
           </div>
         )}
