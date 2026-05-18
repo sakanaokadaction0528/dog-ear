@@ -29,7 +29,6 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
       if (videoRef.current) {
         videoRef.current.pause()
         videoRef.current.srcObject = null
-        videoRef.current.load() // reset to blank so iOS doesn't show an error frame
       }
       stream?.getTracks().forEach(t => t.stop())
       stream = null
@@ -70,12 +69,12 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         // Native BarcodeDetector (Chrome/Android) — fastest path
         if ('BarcodeDetector' in window) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const detector = new (window as any).BarcodeDetector({ formats: ['ean_13', 'ean_8', 'isbn'] })
-          const tick = async () => {
+          const detector = new (window as any).BarcodeDetector({ formats: ['ean_13', 'ean_8'] })
+          const tick = () => {
             if (!active) return
-            try {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const barcodes: any[] = await detector.detect(video)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            detector.detect(video).then((barcodes: any[]) => {
+              if (!active) return
               for (const b of barcodes) {
                 if (isValidISBN(b.rawValue)) {
                   active = false
@@ -83,8 +82,10 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
                   return
                 }
               }
-            } catch { /* no barcode */ }
-            if (active) rafId = requestAnimationFrame(tick)
+              if (active) rafId = requestAnimationFrame(tick)
+            }).catch(() => {
+              if (active) rafId = requestAnimationFrame(tick)
+            })
           }
           rafId = requestAnimationFrame(tick)
           return
