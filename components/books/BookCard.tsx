@@ -17,11 +17,11 @@ export function BookCard({ book }: { book: BookWithNoteCount }) {
           <img
             src={book.cover_url}
             alt={book.title}
-            className="w-12 h-[4.5rem] object-cover rounded-md border border-border shrink-0 shadow-sm"
+            className="w-16 h-[6rem] object-cover rounded-lg border border-border shrink-0 shadow-sm"
           />
         ) : (
-          <div className="w-12 h-[4.5rem] rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-            <BookOpen size={20} className="text-primary/50" />
+          <div className="w-16 h-[6rem] rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <BookOpen size={22} className="text-primary/50" />
           </div>
         )}
 
