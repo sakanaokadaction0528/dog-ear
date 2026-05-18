@@ -122,7 +122,13 @@ export function useBooks() {
     await fetchBooks(true)
   }
 
-  return { books, loading, error, createBook, updateBook, deleteBook, refetch: () => fetchBooks(true) }
+  async function toggleFavorite(id: string) {
+    const book = books.find(b => b.id === id)
+    if (!book) return
+    await updateBook(id, { is_favorite: !book.is_favorite })
+  }
+
+  return { books, loading, error, createBook, updateBook, deleteBook, toggleFavorite, refetch: () => fetchBooks(true) }
 }
 
 const bookByIdCache = new Map<string, BookWithNoteCount>()

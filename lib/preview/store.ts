@@ -71,6 +71,7 @@ export const previewBooks = {
       purpose: values.purpose,
       status: values.status as BookStatus,
       cover_url: null,
+      is_favorite: false,
     }
     saveBooks([book, ...getBooks()])
     return book

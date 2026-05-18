@@ -21,6 +21,7 @@ export type Database = {
           purpose: string | null
           status: 'unread' | 'reading' | 'finished' | 'review'
           cover_url: string | null
+          is_favorite: boolean
           created_at: string
           updated_at: string
         }
@@ -33,6 +34,7 @@ export type Database = {
           purpose?: string | null
           status?: 'unread' | 'reading' | 'finished' | 'review'
           cover_url?: string | null
+          is_favorite?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           purpose?: string | null
           status?: 'unread' | 'reading' | 'finished' | 'review'
           cover_url?: string | null
+          is_favorite?: boolean
           created_at?: string
           updated_at?: string
         }

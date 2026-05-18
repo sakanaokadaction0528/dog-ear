@@ -13,18 +13,20 @@ import { Button } from '@/components/ui/button'
 import type { BookWithNoteCount } from '@/lib/types/app.types'
 
 export default function BooksPage() {
-  const { books, loading } = useBooks()
+  const { books, loading, toggleFavorite } = useBooks()
   const { searchQuery, filterStatus } = useUIStore()
 
-  const filtered = books.filter((book: BookWithNoteCount) => {
-    const matchStatus = !filterStatus || book.status === filterStatus
-    const q = searchQuery.toLowerCase()
-    const matchQuery =
-      !q ||
-      book.title.toLowerCase().includes(q) ||
-      book.author.toLowerCase().includes(q)
-    return matchStatus && matchQuery
-  })
+  const filtered = books
+    .filter((book: BookWithNoteCount) => {
+      const matchStatus = !filterStatus || book.status === filterStatus
+      const q = searchQuery.toLowerCase()
+      const matchQuery =
+        !q ||
+        book.title.toLowerCase().includes(q) ||
+        book.author.toLowerCase().includes(q)
+      return matchStatus && matchQuery
+    })
+    .sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0))
 
   return (
     <div>
@@ -57,7 +59,7 @@ export default function BooksPage() {
           }
         />
       ) : (
-        <BookCoverGrid books={filtered} />
+        <BookCoverGrid books={filtered} onToggleFavorite={toggleFavorite} />
       )}
 
       {/* FAB */}
