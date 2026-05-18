@@ -21,8 +21,8 @@ const STATUS_OPTIONS = [
 type CoverCandidate = { thumbnail: string; title: string; author: string }
 
 async function fetchCovers(title: string, author: string): Promise<CoverCandidate[]> {
-  const q = [title, author].filter(Boolean).join(' ')
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10`
+  const q = encodeURIComponent(title || author)
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=10`
   const res = await fetch(url)
   if (!res.ok) return []
   const json = await res.json()
