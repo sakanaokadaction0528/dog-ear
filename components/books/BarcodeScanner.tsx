@@ -51,7 +51,10 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         // Wait for metadata before playing (required on iOS Safari)
         await new Promise<void>((resolve) => {
           if (video.readyState >= 1) { resolve(); return }
-          video.onloadedmetadata = () => resolve()
+          const onMeta = () => { resolve() }
+          video.addEventListener('loadedmetadata', onMeta, { once: true })
+          // Timeout fallback: try play anyway after 3s
+          setTimeout(() => { video.removeEventListener('loadedmetadata', onMeta); resolve() }, 3000)
         })
 
         try {
