@@ -41,7 +41,7 @@ export default function MyPage() {
         {!isGuest && (
           <Link
             href="/mypage/edit"
-            className="absolute top-0 right-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="absolute top-0 right-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors border border-border"
           >
             <Pencil size={16} />
           </Link>
