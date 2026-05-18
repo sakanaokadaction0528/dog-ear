@@ -25,6 +25,14 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
     let stream: MediaStream | null = null
     let rafId: number
 
+    function stopStream() {
+      // Clear srcObject BEFORE stopping tracks so iOS Safari doesn't
+      // render a "This page couldn't load" error on the video element
+      if (videoRef.current) videoRef.current.srcObject = null
+      stream?.getTracks().forEach(t => t.stop())
+      stream = null
+    }
+
     async function start() {
       try {
         // Try back camera first; fall back to any camera if constraints fail
@@ -35,7 +43,7 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         } catch {
           stream = await navigator.mediaDevices.getUserMedia({ video: true })
         }
-        if (!active) { stream.getTracks().forEach(t => t.stop()); return }
+        if (!active) { stopStream(); return }
 
         const video = videoRef.current!
         video.srcObject = stream
@@ -66,7 +74,7 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
               for (const b of barcodes) {
                 if (isValidISBN(b.rawValue)) {
                   active = false
-                  stream?.getTracks().forEach(t => t.stop())
+                  stopStream()
                   onDetectedRef.current(b.rawValue)
                   return
                 }
@@ -106,7 +114,7 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
               const text = result.getText()
               if (isValidISBN(text)) {
                 active = false
-                stream?.getTracks().forEach(t => t.stop())
+                stopStream()
                 onDetectedRef.current(text)
                 return
               }
@@ -133,7 +141,7 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
     return () => {
       active = false
       cancelAnimationFrame(rafId)
-      stream?.getTracks().forEach(t => t.stop())
+      stopStream()
     }
   }, [])
 
