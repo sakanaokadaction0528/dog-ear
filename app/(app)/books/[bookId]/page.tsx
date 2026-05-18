@@ -89,6 +89,16 @@ export default function BookDetailPage() {
         }
       />
 
+      {book.cover_url && (
+        <div className="flex justify-center items-end px-4 pt-5 pb-3 bg-gradient-to-b from-muted/40 to-transparent">
+          <img
+            src={book.cover_url}
+            alt={book.title}
+            className="w-28 h-40 object-cover rounded-xl shadow-lg border border-border/50"
+          />
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
         <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto px-4 justify-start gap-0">
           {[
