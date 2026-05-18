@@ -10,7 +10,14 @@ const statusColors: Record<BookStatus, string> = {
   review:   'bg-orange-100 text-orange-700',
 }
 
-export function BookStatusBadge({ status }: { status: BookStatus }) {
+export function BookStatusBadge({ status, mini }: { status: BookStatus; mini?: boolean }) {
+  if (mini) {
+    return (
+      <span className={cn('text-[9px] font-bold px-1 py-0.5 rounded', statusColors[status])}>
+        {BOOK_STATUS_LABELS[status]}
+      </span>
+    )
+  }
   return (
     <Badge
       variant="secondary"

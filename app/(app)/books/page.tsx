@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { useBooks } from '@/lib/hooks/useBooks'
 import { useUIStore } from '@/lib/stores/uiStore'
-import { BookCard } from '@/components/books/BookCard'
+import { BookCoverGrid } from '@/components/books/BookCoverGrid'
 import { BookFilters } from '@/components/books/BookFilters'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { BookCardSkeleton } from '@/components/shared/Skeleton'
@@ -57,11 +57,7 @@ export default function BooksPage() {
           }
         />
       ) : (
-        <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
-          {filtered.map((book: BookWithNoteCount) => (
-            <BookCard key={book.id} book={book} />
-          ))}
-        </div>
+        <BookCoverGrid books={filtered} />
       )}
 
       {/* FAB */}
