@@ -20,6 +20,7 @@ export type Database = {
           category: string
           purpose: string | null
           status: 'unread' | 'reading' | 'finished' | 'review'
+          cover_url: string | null
           created_at: string
           updated_at: string
         }
@@ -31,6 +32,7 @@ export type Database = {
           category?: string
           purpose?: string | null
           status?: 'unread' | 'reading' | 'finished' | 'review'
+          cover_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           category?: string
           purpose?: string | null
           status?: 'unread' | 'reading' | 'finished' | 'review'
+          cover_url?: string | null
           created_at?: string
           updated_at?: string
         }

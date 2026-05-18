@@ -7,6 +7,7 @@ export const bookFormSchema = z.object({
   category: z.string().max(50),
   purpose: z.string().max(500).optional(),
   status: z.enum(['unread', 'reading', 'finished', 'review']),
+  cover_url: z.string().url().nullable().optional(),
 })
 
 export type BookFormValues = z.infer<typeof bookFormSchema>

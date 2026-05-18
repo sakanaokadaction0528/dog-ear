@@ -33,11 +33,12 @@ export default function EditBookPage() {
         {book && (
           <BookForm
             defaultValues={{
-              title:    book.title,
-              author:   book.author,
-              category: book.category,
-              purpose:  book.purpose ?? '',
-              status:   book.status as BookFormValues['status'],
+              title:     book.title,
+              author:    book.author,
+              category:  book.category,
+              purpose:   book.purpose ?? '',
+              status:    book.status as BookFormValues['status'],
+              cover_url: book.cover_url ?? null,
             }}
             onSubmit={handleSubmit}
             submitLabel="保存する"

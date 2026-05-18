@@ -70,6 +70,7 @@ export const previewBooks = {
       category: values.category,
       purpose: values.purpose,
       status: values.status as BookStatus,
+      cover_url: null,
     }
     saveBooks([book, ...getBooks()])
     return book

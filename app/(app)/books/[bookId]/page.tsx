@@ -200,6 +200,15 @@ export default function BookDetailPage() {
           )}
 
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            {book.cover_url && (
+              <div className="flex justify-center">
+                <img
+                  src={book.cover_url}
+                  alt={book.title}
+                  className="w-24 h-36 object-cover rounded-lg border border-border shadow-md"
+                />
+              </div>
+            )}
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">タイトル</p>
               <p className="font-semibold text-foreground">{book.title}</p>
