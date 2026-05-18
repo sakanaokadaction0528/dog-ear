@@ -143,7 +143,6 @@ export function PostForm({ bookTitle, bookAuthor, onSubmit, onCancel }: PostForm
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
           onChange={handleFileChange}
         />
