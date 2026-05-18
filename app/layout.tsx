@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { M_PLUS_Rounded_1c } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
+import { ThemeProvider } from '@/lib/context/ThemeContext'
 import './globals.css'
 
 const mPlusRounded = M_PLUS_Rounded_1c({
@@ -41,9 +42,13 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://xvzpxuiqxvhwfmjiooow.supabase.co" />
         <link rel="dns-prefetch" href="https://xvzpxuiqxvhwfmjiooow.supabase.co" />
+        {/* テーマのちらつき防止 */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}` }} />
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
         <Toaster richColors position="top-center" />
       </body>
     </html>

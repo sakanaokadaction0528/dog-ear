@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Loader2, User, Library } from 'lucide-react'
+import { Camera, Loader2, Moon, Sun, User, Library } from 'lucide-react'
+import { useTheme } from '@/lib/context/ThemeContext'
 import { toast } from 'sonner'
 import { TopBar } from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ export default function EditProfilePage() {
   const router = useRouter()
   const { user } = useAuthContext()
   const { profile, loading, updateProfile } = useProfile()
+  const { theme, setTheme } = useTheme()
 
   const [nickname, setNickname] = useState('')
   const [bio, setBio] = useState('')
@@ -164,6 +166,28 @@ export default function EditProfilePage() {
             onChange={(e) => setBio(e.target.value)}
           />
           <p className="text-xs text-muted-foreground text-right">{bio.length}/150</p>
+        </div>
+
+        {/* テーマ設定 */}
+        <div className="flex items-center justify-between py-3 px-4 bg-card border border-border rounded-xl">
+          <div className="flex items-center gap-3">
+            {theme === 'dark' ? (
+              <Moon size={16} className="text-muted-foreground shrink-0" />
+            ) : (
+              <Sun size={16} className="text-muted-foreground shrink-0" />
+            )}
+            <div>
+              <p className="text-sm font-medium text-foreground">ダークモード</p>
+              <p className="text-xs text-muted-foreground">画面の明暗を切り替えます</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className={`relative w-11 h-6 rounded-full transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-muted'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
         </div>
 
         {/* 本棚公開設定 */}
