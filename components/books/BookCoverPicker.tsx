@@ -7,8 +7,8 @@ type Candidate = { thumbnail: string }
 
 async function fetchCovers(q: string): Promise<Candidate[]> {
   const res = await fetch(`/api/book-covers?q=${encodeURIComponent(q)}`)
+  if (!res.ok) throw new Error('通信エラー')
   const json = await res.json()
-  if (json.apiError) throw new Error(json.apiError)
   return json.items ?? []
 }
 
@@ -37,8 +37,8 @@ export function BookCoverPicker({ bookTitle, bookAuthor, coverUrl, onSelect }: B
         results = await fetchCovers(bookAuthor)
       }
       setCandidates(results)
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : '検索に失敗しました')
+    } catch {
+      setErrorMsg('検索できませんでした。もう一度お試しください')
       setCandidates([])
     } finally {
       setLoading(false)

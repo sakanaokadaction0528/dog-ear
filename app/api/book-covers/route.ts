@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+  for (let i = 0; i <= retries; i++) {
+    const res = await fetch(url, {
+      headers: { Referer: 'https://dog-ear-lime.vercel.app' },
+      cache: 'no-store',
+    })
+    if (res.ok || i === retries) return res
+    await new Promise(r => setTimeout(r, 500 * (i + 1)))
+  }
+  throw new Error('fetch failed after retries')
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')
   if (!q) return NextResponse.json({ items: [] })
@@ -7,17 +19,14 @@ export async function GET(req: NextRequest) {
   const apiKey = process.env.GOOGLE_BOOKS_API_KEY
   if (!apiKey) {
     console.error('[book-covers] GOOGLE_BOOKS_API_KEY is not set')
-    return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
+    return NextResponse.json({ items: [] })
   }
 
   const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10&key=${apiKey}`
 
   let data: { items?: unknown[]; error?: { code: number; message: string } }
   try {
-    const res = await fetch(url, {
-      headers: { Referer: 'https://dog-ear-lime.vercel.app' },
-      cache: 'no-store',
-    })
+    const res = await fetchWithRetry(url)
     data = await res.json()
   } catch (e) {
     console.error('[book-covers] fetch failed:', e)
@@ -26,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   if (data.error) {
     console.error('[book-covers] API error:', data.error.code, data.error.message)
-    return NextResponse.json({ items: [], apiError: data.error.message }, { status: data.error.code === 403 ? 403 : 200 })
+    return NextResponse.json({ items: [] })
   }
 
   const items = (data.items ?? [])
