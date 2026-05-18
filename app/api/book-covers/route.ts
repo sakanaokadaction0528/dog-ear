@@ -8,7 +8,9 @@ export async function GET(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
 
   const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10&key=${apiKey}`
-  const res = await fetch(url)
+  const res = await fetch(url, {
+    headers: { Referer: 'https://dog-ear-lime.vercel.app' },
+  })
   const data = await res.json()
 
   const items = (data.items ?? [])
