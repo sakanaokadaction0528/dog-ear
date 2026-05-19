@@ -3,7 +3,7 @@
 import { Heart } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 
-const FANBOX_URL = 'https://pashari-arts0258.fanbox.cc'
+const DONATE_URL = 'https://buymeacoffee.com/pashariartr'
 
 export default function DonatePage() {
   return (
@@ -30,7 +30,7 @@ export default function DonatePage() {
 
         {/* Donate button */}
         <a
-          href={FANBOX_URL}
+          href={DONATE_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-rose-500 text-white font-semibold text-sm hover:bg-rose-600 transition-colors shadow-sm"
