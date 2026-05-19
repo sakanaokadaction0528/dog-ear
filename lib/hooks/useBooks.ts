@@ -8,9 +8,9 @@ import type { BookWithNoteCount, BookInsert, BookUpdate } from '@/lib/types/app.
 
 const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 
-// Module-level cache for real Supabase mode
-let booksCache: BookWithNoteCount[] | null = null
-let booksCacheTime = 0
+// Module-level cache keyed by userId so accounts never share cached data
+const booksCacheByUser = new Map<string, BookWithNoteCount[]>()
+const booksCacheTimeByUser = new Map<string, number>()
 const CACHE_TTL = 60_000
 const FETCH_TIMEOUT = 4000
 
@@ -23,12 +23,13 @@ function parseBooks(data: unknown[]): BookWithNoteCount[] {
 }
 
 export function useBooks() {
-  const { isGuest } = useAuthContext()
+  const { isGuest, user } = useAuthContext()
   const IS_PREVIEW = PREVIEW_ENABLED && isGuest
+  const userId = user?.id ?? ''
   const [books, setBooks] = useState<BookWithNoteCount[]>(() =>
-    IS_PREVIEW ? previewBooks.getAll() : (booksCache ?? [])
+    IS_PREVIEW ? previewBooks.getAll() : (booksCacheByUser.get(userId) ?? [])
   )
-  const [loading, setLoading] = useState(!IS_PREVIEW && booksCache === null)
+  const [loading, setLoading] = useState(!IS_PREVIEW && !booksCacheByUser.has(userId))
   const [error, setError] = useState<string | null>(null)
   const supabase = IS_PREVIEW ? null : getSupabaseBrowserClient()
 
@@ -40,12 +41,14 @@ export function useBooks() {
     }
 
     const now = Date.now()
-    if (!force && booksCache && now - booksCacheTime < CACHE_TTL) {
-      setBooks(booksCache)
+    const cached = booksCacheByUser.get(userId)
+    const cachedAt = booksCacheTimeByUser.get(userId) ?? 0
+    if (!force && cached && now - cachedAt < CACHE_TTL) {
+      setBooks(cached)
       setLoading(false)
       return
     }
-    if (booksCache === null) setLoading(true)
+    if (!cached) setLoading(true)
     setError(null)
 
     const fallback = setTimeout(() => setLoading(false), FETCH_TIMEOUT)
@@ -59,9 +62,11 @@ export function useBooks() {
         setError(err.message)
       } else {
         const parsed = parseBooks(data ?? [])
-        booksCache = parsed
-        booksCacheTime = Date.now()
-        parsed.forEach((b) => bookByIdCache.set(b.id, b))
+        booksCacheByUser.set(userId, parsed)
+        booksCacheTimeByUser.set(userId, Date.now())
+        const userBookCache = bookByIdCacheByUser.get(userId) ?? new Map()
+        parsed.forEach((b) => userBookCache.set(b.id, b))
+        bookByIdCacheByUser.set(userId, userBookCache)
         setBooks(parsed)
       }
     } catch {
@@ -70,7 +75,7 @@ export function useBooks() {
       clearTimeout(fallback)
       setLoading(false)
     }
-  }, [supabase])
+  }, [supabase, userId])
 
   useEffect(() => { fetchBooks() }, [fetchBooks])
 
@@ -92,7 +97,7 @@ export function useBooks() {
     const { data, error: err } = await supabase!
       .from('books').insert({ ...values, user_id: user.id }).select().single()
     if (err || !data) throw new Error(err?.message ?? 'Insert failed')
-    booksCache = null
+    booksCacheByUser.delete(userId)
     await fetchBooks(true)
     return data
   }
@@ -105,7 +110,7 @@ export function useBooks() {
     }
     const { error: err } = await supabase!.from('books').update(values).eq('id', id)
     if (err) throw new Error(err.message)
-    booksCache = null
+    booksCacheByUser.delete(userId)
     await fetchBooks(true)
   }
 
@@ -117,8 +122,8 @@ export function useBooks() {
     }
     const { error: err } = await supabase!.from('books').delete().eq('id', id)
     if (err) throw new Error(err.message)
-    booksCache = null
-    bookByIdCache.delete(id)
+    booksCacheByUser.delete(userId)
+    bookByIdCacheByUser.get(userId)?.delete(id)
     await fetchBooks(true)
   }
 
@@ -131,15 +136,17 @@ export function useBooks() {
   return { books, loading, error, createBook, updateBook, deleteBook, toggleFavorite, refetch: () => fetchBooks(true) }
 }
 
-const bookByIdCache = new Map<string, BookWithNoteCount>()
+const bookByIdCacheByUser = new Map<string, Map<string, BookWithNoteCount>>()
 
 export function useBook(id: string) {
-  const { isGuest } = useAuthContext()
+  const { isGuest, user } = useAuthContext()
   const IS_PREVIEW = PREVIEW_ENABLED && isGuest
+  const userId = user?.id ?? ''
+  const userBookCache = bookByIdCacheByUser.get(userId) ?? new Map()
   const [book, setBook] = useState<BookWithNoteCount | null>(() =>
-    IS_PREVIEW ? previewBooks.getById(id) : (bookByIdCache.get(id) ?? null)
+    IS_PREVIEW ? previewBooks.getById(id) : (userBookCache.get(id) ?? null)
   )
-  const [loading, setLoading] = useState(!IS_PREVIEW && !bookByIdCache.has(id))
+  const [loading, setLoading] = useState(!IS_PREVIEW && !userBookCache.has(id))
   const supabase = IS_PREVIEW ? null : getSupabaseBrowserClient()
 
   const fetchBook = useCallback(async () => {
@@ -149,8 +156,9 @@ export function useBook(id: string) {
       return
     }
 
-    if (bookByIdCache.has(id)) {
-      setBook(bookByIdCache.get(id)!)
+    const cache = bookByIdCacheByUser.get(userId) ?? new Map()
+    if (cache.has(id)) {
+      setBook(cache.get(id)!)
       setLoading(false)
     }
     const fallback = setTimeout(() => setLoading(false), FETCH_TIMEOUT)
@@ -159,7 +167,8 @@ export function useBook(id: string) {
         .from('books').select('*, reading_notes(count)').eq('id', id).single()
       if (data) {
         const [parsed] = parseBooks([data])
-        bookByIdCache.set(id, parsed)
+        cache.set(id, parsed)
+        bookByIdCacheByUser.set(userId, cache)
         setBook(parsed)
       }
     } catch {
@@ -168,7 +177,7 @@ export function useBook(id: string) {
       clearTimeout(fallback)
       setLoading(false)
     }
-  }, [supabase, id])
+  }, [supabase, id, userId])
 
   useEffect(() => { fetchBook() }, [fetchBook])
 
