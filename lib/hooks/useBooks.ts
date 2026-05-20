@@ -51,11 +51,14 @@ export function useBooks() {
     if (!cached) setLoading(true)
     setError(null)
 
+    if (!userId) { setLoading(false); return } // 未認証なら何もしない
+
     const fallback = setTimeout(() => setLoading(false), FETCH_TIMEOUT)
     try {
       const { data, error: err } = await supabase!
         .from('books')
         .select('*, reading_notes(count)')
+        .eq('user_id', userId)                  // RLS に加えて明示的にフィルター
         .order('updated_at', { ascending: false })
 
       if (err) {
@@ -164,7 +167,8 @@ export function useBook(id: string) {
     const fallback = setTimeout(() => setLoading(false), FETCH_TIMEOUT)
     try {
       const { data } = await supabase!
-        .from('books').select('*, reading_notes(count)').eq('id', id).single()
+        .from('books').select('*, reading_notes(count)')
+        .eq('id', id).eq('user_id', userId).single()
       if (data) {
         const [parsed] = parseBooks([data])
         cache.set(id, parsed)
