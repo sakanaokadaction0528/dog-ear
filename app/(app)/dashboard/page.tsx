@@ -23,23 +23,6 @@ export default function DashboardPage() {
   const finished = books.filter((b: BookWithNoteCount) => b.status === 'finished')
   const pendingTasks = items.filter((i: ActionItem) => !i.completed)
 
-  if (booksLoading) return (
-    <div className="px-4 pt-5 pb-6 space-y-6">
-      <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-lg bg-muted animate-pulse" />
-        <div className="space-y-1.5">
-          <div className="h-5 w-20 rounded bg-muted animate-pulse" />
-          <div className="h-3 w-32 rounded bg-muted animate-pulse" />
-        </div>
-      </div>
-      <StatsSkeleton />
-      <div className="space-y-2">
-        <BookCardSkeleton />
-        <BookCardSkeleton />
-      </div>
-    </div>
-  )
-
   return (
     <div className="px-4 pt-5 pb-6 space-y-6">
       {/* Header */}
@@ -52,18 +35,20 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: '読書中', value: reading.length, color: 'text-primary' },
-          { label: '読了',   value: finished.length, color: 'text-green-600' },
-          { label: 'タスク', value: pendingTasks.length, color: 'text-foreground' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-card border border-border rounded-xl p-3 text-center">
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
-          </div>
-        ))}
-      </div>
+      {booksLoading ? <StatsSkeleton /> : (
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: '読書中', value: reading.length, color: 'text-primary' },
+            { label: '読了',   value: finished.length, color: 'text-green-600' },
+            { label: 'タスク', value: pendingTasks.length, color: 'text-foreground' },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-card border border-border rounded-xl p-3 text-center">
+              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tasks */}
       <section>
@@ -128,7 +113,7 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {books.length === 0 && (
+      {!booksLoading && books.length === 0 && (
         <EmptyState
           title="最初の本を追加しましょう"
           description="読んでいる本・読みたい本を記録してAIで学びを最大化しましょう"

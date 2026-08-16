@@ -8,22 +8,25 @@ import type { ActionItem, ActionItemInsert } from '@/lib/types/app.types'
 
 const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_PREVIEW_MODE === '1'
 
-let allItemsCache: ActionItem[] | null = null
-let allItemsCacheTime = 0
+// Cache keyed by userId so accounts never share data
+const allItemsCacheByUser = new Map<string, ActionItem[]>()
+const allItemsCacheTimeByUser = new Map<string, number>()
 const CACHE_TTL = 60_000
-const FETCH_TIMEOUT = 4000
+const FETCH_TIMEOUT = 8000
 
 export function useActionItems(bookId?: string) {
-  const { isGuest } = useAuthContext()
+  const { isGuest, user } = useAuthContext()
   const IS_PREVIEW = PREVIEW_ENABLED && isGuest
+  const userId = user?.id ?? ''
   const [items, setItems] = useState<ActionItem[]>(() => {
     if (IS_PREVIEW) {
       return bookId ? previewActions.getByBook(bookId) : previewActions.getAll()
     }
-    if (!allItemsCache) return []
-    return bookId ? allItemsCache.filter((i) => i.book_id === bookId) : allItemsCache
+    const cached = allItemsCacheByUser.get(userId)
+    if (!cached) return []
+    return bookId ? cached.filter((i) => i.book_id === bookId) : cached
   })
-  const [loading, setLoading] = useState(!IS_PREVIEW && allItemsCache === null)
+  const [loading, setLoading] = useState(!IS_PREVIEW && !allItemsCacheByUser.has(userId))
   const supabase = IS_PREVIEW ? null : getSupabaseBrowserClient()
 
   const fetchItems = useCallback(async (force = false) => {
@@ -34,20 +37,22 @@ export function useActionItems(bookId?: string) {
     }
 
     const now = Date.now()
-    if (!force && allItemsCache && now - allItemsCacheTime < CACHE_TTL) {
-      setItems(bookId ? allItemsCache.filter((i) => i.book_id === bookId) : allItemsCache)
+    const cached = allItemsCacheByUser.get(userId)
+    const cachedAt = allItemsCacheTimeByUser.get(userId) ?? 0
+    if (!force && cached && now - cachedAt < CACHE_TTL) {
+      setItems(bookId ? cached.filter((i) => i.book_id === bookId) : cached)
       setLoading(false)
       return
     }
-    if (allItemsCache === null) setLoading(true)
+    if (!cached) setLoading(true)
 
     const fallback = setTimeout(() => setLoading(false), FETCH_TIMEOUT)
     try {
       const { data } = await supabase!
         .from('action_items').select('*').order('created_at', { ascending: false })
       const all = data ?? []
-      allItemsCache = all
-      allItemsCacheTime = Date.now()
+      allItemsCacheByUser.set(userId, all)
+      allItemsCacheTimeByUser.set(userId, Date.now())
       setItems(bookId ? all.filter((i) => i.book_id === bookId) : all)
     } catch {
       // ignore
@@ -55,7 +60,7 @@ export function useActionItems(bookId?: string) {
       clearTimeout(fallback)
       setLoading(false)
     }
-  }, [supabase, bookId])
+  }, [supabase, bookId, userId])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
@@ -78,7 +83,7 @@ export function useActionItems(bookId?: string) {
     const { data, error } = await supabase!
       .from('action_items').insert({ ...values, user_id: user.id }).select().single()
     if (error) throw new Error(error.message)
-    allItemsCache = null
+    allItemsCacheByUser.delete(userId)
     await fetchItems(true)
     return data
   }
@@ -91,8 +96,9 @@ export function useActionItems(bookId?: string) {
     }
     const { error } = await supabase!.from('action_items').update({ completed }).eq('id', id)
     if (error) throw new Error(error.message)
-    if (allItemsCache) {
-      allItemsCache = allItemsCache.map((i) => (i.id === id ? { ...i, completed } : i))
+    const cached = allItemsCacheByUser.get(userId)
+    if (cached) {
+      allItemsCacheByUser.set(userId, cached.map((i) => (i.id === id ? { ...i, completed } : i)))
     }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, completed } : i)))
   }
@@ -105,7 +111,7 @@ export function useActionItems(bookId?: string) {
     }
     const { error } = await supabase!.from('action_items').delete().eq('id', id)
     if (error) throw new Error(error.message)
-    allItemsCache = null
+    allItemsCacheByUser.delete(userId)
     await fetchItems(true)
   }
 
