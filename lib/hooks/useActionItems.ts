@@ -46,6 +46,8 @@ export function useActionItems(bookId?: string) {
     }
     if (!cached) setLoading(true)
 
+    if (!userId) { setLoading(false); return } // 未認証なら何もしない
+
     const fallback = setTimeout(() => setLoading(false), FETCH_TIMEOUT)
     try {
       const { data } = await supabase!
