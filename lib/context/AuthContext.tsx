@@ -26,20 +26,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
 
-    // getSession reads from cookie — no network, resolves immediately
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
-      setAuthLoading(false)
-    })
+    // 3秒以内に getSession が解決しない場合は未認証として扱う（ハング防止）
+    const timeout = setTimeout(() => setAuthLoading(false), 3000)
+
+    // getSession は Cookie を読むだけなので基本即時。
+    // トークンリフレッシュが必要な場合のみ少し時間がかかる。
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        setUser(data.session?.user ?? null)
+        setAuthLoading(false)
+      })
+      .catch(() => {
+        // ネットワークエラー等でも authLoading を解除する
+        setAuthLoading(false)
+      })
+      .finally(() => clearTimeout(timeout))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setAuthLoading(false)
       if (_event === 'SIGNED_IN' && session?.user) {
         migrateGuestData(session.user.id, supabase).catch(() => {})
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   async function signOut() {
