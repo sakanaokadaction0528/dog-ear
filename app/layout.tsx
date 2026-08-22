@@ -44,6 +44,8 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://xvzpxuiqxvhwfmjiooow.supabase.co" />
         {/* テーマのちらつき防止 */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}` }} />
+        {/* Service Worker 登録 — JS/CSS をキャッシュして2回目以降の起動を高速化 */}
+        <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{})})}` }} />
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
