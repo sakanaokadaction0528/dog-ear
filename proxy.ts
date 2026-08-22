@@ -29,9 +29,15 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Cookie のリフレッシュのために呼ぶ（認証チェック目的ではない）
-  // 認証ガード・リダイレクトは app/(app)/layout.tsx の AppShell で処理
-  await supabase.auth.getSession()
+  // Cookie のリフレッシュのために呼ぶ
+  const { data: { session } } = await supabase.auth.getSession()
+
+  // ログイン済みユーザーが /login や /register を開いた場合だけリダイレクト
+  const pathname = request.nextUrl.pathname
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
+  if (session?.user && isAuthPage) {
+    return NextResponse.redirect(new URL('/dashboard', request.nextUrl.origin))
+  }
 
   return supabaseResponse
 }
