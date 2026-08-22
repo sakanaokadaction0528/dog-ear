@@ -6,6 +6,8 @@ import type { NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
+  // セッション Cookie のリフレッシュのみを行う（認証リダイレクトはクライアント側で処理）
+  // これにより各ページロードの遅延を最小化する
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -27,36 +29,16 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user ?? null
-
-  const pathname = request.nextUrl.pathname
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
-  const isApi = pathname.startsWith('/api')
-  const isStatic = pathname.startsWith('/_next') || pathname === '/favicon.ico'
-
-  if (isStatic || isApi) return supabaseResponse
-
-  // PREVIEW_MODE: skip auth redirect to allow UI preview without real Supabase creds
-  if (process.env.PREVIEW_MODE !== '1') {
-    if (!user && !isAuthPage) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      return NextResponse.redirect(url)
-    }
-
-    if (user && isAuthPage) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
-  }
+  // Cookie のリフレッシュのために呼ぶ（認証チェック目的ではない）
+  // 認証ガード・リダイレクトは app/(app)/layout.tsx の AppShell で処理
+  await supabase.auth.getSession()
 
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|icon.*\\.png|manifest\\.json).*)',
+    // 静的アセット・画像・マニフェストはスキップ（高速化）
+    '/((?!_next/static|_next/image|favicon\\.ico|icon.*\\.png|manifest\\.json|sw\\.js).*)',
   ],
 }

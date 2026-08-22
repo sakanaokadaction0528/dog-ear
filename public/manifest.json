@@ -3,10 +3,12 @@
   "short_name": "Dog Ear",
   "description": "AI読書メモ・要約・行動提案アプリ",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F8F7F4",
   "theme_color": "#4A6FA5",
   "orientation": "portrait",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon-192.png",
