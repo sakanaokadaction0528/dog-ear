@@ -6,8 +6,6 @@ import type { NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  // セッション Cookie のリフレッシュのみを行う（認証リダイレクトはクライアント側で処理）
-  // これにより各ページロードの遅延を最小化する
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,13 +27,20 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Cookie のリフレッシュのために呼ぶ
+  // セッション Cookie をリフレッシュ＋認証チェック
   const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
 
-  // ログイン済みユーザーが /login や /register を開いた場合だけリダイレクト
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
-  if (session?.user && isAuthPage) {
+
+  // 未認証 → /login へリダイレクト（静的アセット・API は除外済み）
+  if (!user && !isAuthPage) {
+    return NextResponse.redirect(new URL('/login', request.nextUrl.origin))
+  }
+
+  // 認証済みでログインページにいる → /dashboard へ
+  if (user && isAuthPage) {
     return NextResponse.redirect(new URL('/dashboard', request.nextUrl.origin))
   }
 
@@ -44,7 +49,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // 静的アセット・画像・マニフェストはスキップ（高速化）
+    // 静的アセット・画像・マニフェスト・SW はスキップ
     '/((?!_next/static|_next/image|favicon\\.ico|icon.*\\.png|manifest\\.json|sw\\.js).*)',
   ],
 }
