@@ -34,14 +34,16 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
 
-  // 未認証 → /login へリダイレクト（静的アセット・API は除外済み）
-  if (!user && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.nextUrl.origin))
-  }
-
-  // 認証済みでログインページにいる → /dashboard へ
-  if (user && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.nextUrl.origin))
+  // PREVIEW_MODE=1 の場合はリダイレクトをスキップ（UI プレビュー用）
+  if (process.env.PREVIEW_MODE !== '1') {
+    // 未認証 → /login へリダイレクト
+    if (!user && !isAuthPage) {
+      return NextResponse.redirect(new URL('/login', request.nextUrl.origin))
+    }
+    // 認証済みでログインページにいる → /dashboard へ
+    if (user && isAuthPage) {
+      return NextResponse.redirect(new URL('/dashboard', request.nextUrl.origin))
+    }
   }
 
   return supabaseResponse
